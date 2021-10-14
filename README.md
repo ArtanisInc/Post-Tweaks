@@ -1,4 +1,4 @@
-<div align="center"><h1>This script is outdated a new version is coming soon !!!</h1>
+<div align="center"><h1>This script is outdated a new version is coming soon !!!</h1></div>
 <div align="center"><h1>Post Tweaks</h1>
 <h3>A post-installation batch script for Windows<h3>
 <img src="https://cdn.discordapp.com/attachments/595370063104573511/761281873979768872/demo.gif">
