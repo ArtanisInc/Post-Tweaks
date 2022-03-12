@@ -1,4 +1,3 @@
-<div align="center"><h1>This script is outdated a new version is coming soon !!!</h1></div>
 <div align="center"><h1>Post Tweaks</h1>
 <h3>A post-installation batch script for Windows<h3>
 <img src="https://cdn.discordapp.com/attachments/595370063104573511/761281873979768872/demo.gif">
@@ -21,7 +20,7 @@ Post Tweaks aims to improve the responsiveness, performance and privacy of Windo
 - Stable internet connection
 
 ## Download
-Get the latest version 1.6.8 (13/03/2021) [here](https://codeload.github.com/ArtanisInc/Post-Tweaks/zip/main).
+Get the latest version 2.0.0 (13/03/2022) [here](https://codeload.github.com/ArtanisInc/Post-Tweaks/zip/main).
 
 ## Contributing
 If you're a developer or just a software user you can help the project by:
@@ -31,4 +30,4 @@ If you're a developer or just a software user you can help the project by:
 * Fixing issues, if you spot an [issue](https://github.com/ArtanisInc/Post-Tweaks/issues) you think you can fix, please make a fork and submit a [Pull Requests](https://github.com/ArtanisInc/Post-Tweaks/pulls) that solves the issue. Any contributions are welcome!
 
 ## License
-Post Tweaks is licensed under the [Creative Commons : CC-BY-NC](https://creativecommons.org/licenses/by-nc/4.0/) license. For more details, see the [LICENSE](LICENSE.md).
+Post Tweaks is licensed under the [Creative Commons : CC-BY-NC](https://creativecommons.org/licenses/by-nc/4.0/) license. For more details, see the [LICENSE](LICENSE.md)
