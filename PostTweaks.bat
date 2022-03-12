@@ -37,12 +37,12 @@ if !ERRORLEVEL! neq 0 (
     pause >nul && exit
 )
 
-call:CURL "1" "https://raw.githubusercontent.com/ArtanisInc/Post-Tweaks/main/version.txt" "version.txt"
+call:CURL "1" "https://raw.githubusercontent.com/ArtanisInc/Post-Tweaks/main/version" "version"
 if !ERRORLEVEL! equ 0 (
-    for /f "tokens=1 delims= " %%i in (version.txt) do set "LATEST_VERSION=%%i"
-    for /f "tokens=1,2 delims= " %%i in (version.txt) do set "LATEST_VERSION_INFO=%%j"
+    for /f "tokens=1 delims= " %%i in (version) do set "LATEST_VERSION=%%i"
+    for /f "tokens=1,2 delims= " %%i in (version) do set "LATEST_VERSION_INFO=%%j"
 )
-del /f /q "version.txt" >nul 2>&1
+del /f /q "version" >nul 2>&1
 
 if /i !VERSION! lss !LATEST_VERSION! (
     cls
