@@ -5,7 +5,7 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.0.0"
+set "VERSION=2.0.1"
 set "VERSION_INFO=13/03/2022"
 
 call:SETCONSTANTS >nul 2>&1
@@ -471,10 +471,6 @@ for /f %%i in ('wmic path Win32_SoundDevice get PNPDeviceID^| findstr /l "PCI\VE
 echo Removing Devices Priority
 for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "Affinity Policy"^| findstr /l "PCI\VEN_"') do reg delete "%%i" /v "DevicePriority" /f >nul 2>&1
 
-echo Setting SpreadMessageAcrossAllProccessors to SATA Controller
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /l "PCI\VEN_"') do reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "5" /f >nul 2>&1
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /l "PCI\VEN_"') do reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f >nul 2>&1
-
 echo Enabling hardware accelerated GPU scheduling in the DirectX Graphics Kernel
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d "2" /f >nul 2>&1
 
@@ -489,7 +485,6 @@ if "!GPU!"=="NVIDIA" (
             reg add "!REGPATH_NVIDIA!" /v "powermizerenable" /t REG_DWORD /d "1" /f
             reg add "!REGPATH_NVIDIA!" /v "powermizerlevel" /t REG_DWORD /d "1" /f
             reg add "!REGPATH_NVIDIA!" /v "powermizerlevelac" /t REG_DWORD /d "1" /f
-            REM reg add "!REGPATH_NVIDIA!" /v "DisableDynamicPstate" /t REG_DWORD /d "1" /f
         )
         reg add "!REGPATH_NVIDIA!" /v "PreferSystemMemoryContiguous" /t REG_DWORD /d "1" /f
     ) >nul 2>&1
@@ -565,17 +560,15 @@ if "!GPU!"=="INTEL" (
 
 echo Disabling Services
 for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "ErrorControl"^| findstr "HKEY"') do reg add "%%i" /v "ErrorControl" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dhcp" /v "DependOnService" /t REG_MULTI_SZ /d "" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e96c-e325-11ce-bfc1-08002be10318}" /v "UpperFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f}" /v "UpperFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
-for %%i in (AcpiDev acpipagr AcpiPmi Acpitime bam Beep bowser CAD CLFS CldFlt CSC CompositeBus condrv cnghwassist
-    dam dfsc EhStorClass fastfat FileCrypt FileInfo fvevol GpuEnergyDrv HdAudAddService iorate kdnic KSecPkg
-    lltdio Modem mrxdav mrxsmb Mrxsmb10 Mrxsmb20 MsLldp MsQuic mssmbios NdisCap NdisVirtualBus NdisTapi NdisWan
-    Ndproxy Npsvctrig NetBIOS NetBT Ndu PEAUTH PptpMiniport QWAVEdrv RasAcd RasAgileVpn Rasl2tp RasPppoe
-    RasSstp rdbss rdpbus rspndr spaceport srv2 Srvnet TapiSrv tcpipreg tdx TPM tunnel umbus vdrvroot Vid Wanarp
-    wanarpv6 Wcifs Wcnfs WindowsTrustedRT WindowsTrustedRTProxy ws2ifsl DiagTrack dmwappushservice diagnosticshub.standardcollector.service
-    RetailDemo WinRM WMPNetworkSvc edgeupdatem MapsBroker "FontCache3.0.0.0") do (
+for %%i in (AcpiDev acpipagr AcpiPmi Acpitime bam Beep cnghwassist CompositeBus CSC dam
+    fvevol GpuEnergyDrv KSecPkg MsLldp NetBIOS NetBT PEAUTH rspndr tcpipreg
+    tdx umbus ws2ifsl DiagTrack dmwappushservice diagnosticshub.standardcollector.service
+    RetailDemo WinRM WMPNetworkSvc edgeupdate edgeupdatem MapsBroker "FontCache3.0.0.0") do (
     reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%i" /ve >nul 2>&1
     if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%i" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
