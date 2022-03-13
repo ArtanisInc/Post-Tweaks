@@ -306,10 +306,6 @@ reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >nul 2>&1
 
-echo Mouse and Keyboard Buffering
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d "20" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d "20" /f >nul 2>&1
-
 echo Power settings
 for %%i in (CsEnabled EnergyEstimationEnabled HibernateEnabled HibernateEnabledDefault CoalescingTimerInterval) do reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
 if "!POWER_SAVING!"=="OFF" reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f >nul 2>&1
