@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.0.1"
-set "VERSION_INFO=13/03/2022"
+set "VERSION=2.1.0"
+set "VERSION_INFO=26/03/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -455,9 +455,6 @@ if !ERRORLEVEL! equ 6 (
     wmic /NAMESPACE:"\\root\subscription" PATH __FilterToConsumerBinding CREATE Filter="__EventFilter.Name=\"GlobalAppCompatFlags\"", Consumer="ActiveScriptEventConsumer.Name=\"GlobalAppCompatFlags\"" >nul 2>&1
 )
 
-echo Setting IoLatencyCaps to 0
-for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "IoLatencyCap"^| findstr "HKEY"') do reg add "%%i" /v "IoLatencyCap" /t REG_DWORD /d "0" /f >nul 2>&1
-
 echo Removing IRQ Priorities
 for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /f "irq"^| findstr "IRQ"') do reg delete "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "%%i" /f >nul 2>&1
 
@@ -490,7 +487,6 @@ if "!GPU!"=="NVIDIA" (
     ) >nul 2>&1
 
     echo Disabling Nvidia Telemetry
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\NvTelemetryContainer" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\NVIDIA Corporation\NVControlPanel2\Client" /v "OptInOrOutPreference" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (NvTmMon NvTmRep NvProfile) do for /f "tokens=1 delims=," %%a in ('schtasks /query /fo csv^| findstr /v "TaskName"^| findstr "%%~i"') do schtasks /change /tn "%%a" /disable >nul 2>&1
 
@@ -538,9 +534,6 @@ if "!GPU!"=="AMD" (
         reg add "!REGPATH_AMD!\UMD" /v "VSyncControl" /t REG_BINARY /d "3000" /f
         reg add "!REGPATH_AMD!\UMD" /v "TFQ" /t REG_BINARY /d "3200" /f
     ) >nul 2>&1
-
-    echo Disabling AMD logging service
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\amdlog" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 
 if "!GPU!"=="INTEL" (
@@ -566,9 +559,9 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f}" /v "UpperFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
 for %%i in (AcpiDev acpipagr AcpiPmi Acpitime bam Beep cnghwassist CompositeBus CSC dam
-    fvevol GpuEnergyDrv KSecPkg MsLldp NetBIOS NetBT PEAUTH rspndr tcpipreg
-    tdx umbus ws2ifsl DiagTrack dmwappushservice diagnosticshub.standardcollector.service
-    RetailDemo WinRM WMPNetworkSvc edgeupdate edgeupdatem MapsBroker "FontCache3.0.0.0") do (
+    fvevol GpuEnergyDrv MsLldp NetBIOS NetBT PEAUTH rspndr tcpipreg tdx umbus ws2ifsl
+    DiagTrack dmwappushservice diagnosticshub.standardcollector.service RetailDemo WinRM
+    WMPNetworkSvc edgeupdate edgeupdatem MapsBroker "FontCache3.0.0.0" NvTelemetryContainer amdlog) do (
     reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%i" /ve >nul 2>&1
     if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%i" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
@@ -576,7 +569,6 @@ if "!PC_TYPE!"=="DESKTOP" (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\msisadrv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WmiAcpi" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-if "!MSACCOUNT!"=="LOCAL" reg add "HKLM\SYSTEM\CurrentControlSet\Services\wlidsvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 
 call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Windows Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Files and Printers share support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable Remote support;Disable VPN support;Disable IPv6 support;Disable QoS support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
 findstr /c:"Disable Windows Search" "%TMP%\services.txt" >nul 2>&1
@@ -626,8 +618,7 @@ if !ERRORLEVEL! equ 0 (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
-    call:POWERSHELL "Get-AppxPackage -AllUsers | Where-Object {$_.Name –Like '*Xbox*'} | Where-Object {$_.Name –Like '*GamingApp*'} | Remove-AppxPackage"
-    call:POWERSHELL "Get-AppXProvisionedPackage -Online | Where-Object {$_.Name –Like '*Xbox*'} | Where-Object {$_.Name –Like '*GamingApp*'} | Remove-AppXProvisionedPackage -Online"
+    call:POWERSHELL "$AppxPackages = @(\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\");foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -Name $AppxPackage -AllUsers | Remove-AppxPackage -AllUsers}"
 )
 findstr /c:"Disable Themes management" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -813,6 +804,12 @@ if "!POWER_SAVING!"=="OFF" (
     for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (EnableHIPM EnableDIPM EnableHDDParking) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "%%i" ^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (iaStorAC iaStorA iaStorAV) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a\Parameters" /v "EnableAPM" /t REG_DWORD /d "0" /f >nul 2>&1
+
+    echo Disabling USB power savings
+    for %%i in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended
+        SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled
+        D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState
+    ) do for /f "delims=" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 
 call:MSGBOX "Install Timer Resolution Service ?\n\nChange your Windows timer resolution to 0.5ms to improve performance and responsiveness for games and peripherals." vbYesNo+vbQuestion "Timer Resolution"
@@ -825,9 +822,7 @@ if !ERRORLEVEL! equ 6 (
 call:MSGBOX "Remove all non-essential Microsoft Store Apps ?" vbYesNo+vbQuestion "Bloatware"
 if !ERRORLEVEL! equ 6 (
     echo Removing Windows bloatware
-    for %%i in ("capturepicker" "screensketch" "calculator" "windows.photos" "mspaint" "store" "xbox" "GamingApp" "IntelGraphics" "NVIDIAControlPanel" "RealtekAudioControl" "AdvancedMicroDevicesInc") do set "REMOVE_BLOAT=!REMOVE_BLOAT! Where-Object {$_.Name –NotLike '*%%~i*'} |"
-    call:POWERSHELL "Get-AppxPackage -AllUsers |!REMOVE_BLOAT! Remove-AppxPackage"
-    call:POWERSHELL "Get-AppXProvisionedPackage -Online |!REMOVE_BLOAT! Remove-AppXProvisionedPackage -Online"
+    call:POWERSHELL "$ExcludedAppxPackages = @(\"Microsoft.WindowsStore\",\"Microsoft.StorePurchaseApp\",\"Microsoft.WindowsNotepad\",\"Microsoft.WindowsTerminal\",\"Microsoft.WindowsTerminalPreview\",\"Microsoft.WebMediaExtensions\",\"Microsoft.WindowsCamera\",\"Microsoft.WindowsCalculator\",\"Microsoft.Windows.Photos\",\"Microsoft.Photos.MediaEngineDLC\",\"Microsoft.HEVCVideoExtension\",\"Microsoft.ScreenSketch\",\"Microsoft.Windows.CapturePicker\",\"Microsoft.Paint\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\",\"AppUp.IntelGraphicsControlPanel\",\"AppUp.IntelGraphicsExperience\",\"NVIDIACorp.NVIDIAControlPanel\",\"AdvancedMicroDevicesInc-2.AMDRadeonSoftware\",\"RealtekSemiconductorCorp.RealtekAudioControl\");$AppxPackages = (Get-AppxPackage -PackageTypeFilter Bundle -AllUsers).Name | Select-String $ExcludedAppxPackages -NotMatch;foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -PackageTypeFilter Bundle -AllUsers | Where-Object -FilterScript {$_.Name -cmatch $AppxPackage} | Remove-AppxPackage -AllUsers}"
 )
 
 echo Network tweaks
@@ -1874,7 +1869,7 @@ echo              !S_GREEN!19 !CINEBENCH!                             !S_GREEN!2
 echo              !S_GREEN!20 !AIDA64!                                !S_GREEN!26 !TCP Optimizer!                         !S_GREEN!32 !SweetLow Mouse Rate Changer!
 echo              !S_GREEN!21 !OCCT!                                  !S_GREEN!27 !DNS Jumper!                            !S_GREEN!33 !ThrottleStop!
 echo              !S_GREEN!22 !CapFrameX!                             !S_GREEN!28 !Nvidia Profile Inspector!              !S_GREEN!34 !Power Settings Explorer!
-echo              !S_GREEN!23 !MouseTester!                           !S_GREEN!29 !RadeonMod!                             
+echo              !S_GREEN!23 !MouseTester!                           !S_GREEN!29 !RadeonMod!
 echo.
 echo                                                     !S_GRAY!Make your choices OR "!S_GREEN!BACK!S_GRAY!" AND press !S_GREEN!{ENTER}!S_GRAY!
 echo.
@@ -2130,8 +2125,6 @@ for /f "skip=1" %%i in ('wmic CPU get NumberOfLogicalProcessors') do set "LOGICA
 if !CORE! lss !LOGICAL_PROCESSORS! (set "HT_SMT=ON") else set "HT_SMT=OFF"
 REM Check Wi-Fi
 wmic path WIN32_NetworkAdapter where NetConnectionID="Wi-Fi" get NetConnectionStatus | findstr "2" >nul 2>&1 && set "NIC_TYPE=WIFI"
-REM Check Microsoft account
-wmic path Win32_UserAccount where name="%username%" get LocalAccount | findstr "TRUE" >nul 2>&1 && set "MSACCOUNT=LOCAL"
 REM SvcHost
 for /f "skip=1" %%i in ('wmic os get TotalVisibleMemorySize') do if not defined SVCHOST (set /a SVCHOST=%%i+1024000)
 REM User SID
