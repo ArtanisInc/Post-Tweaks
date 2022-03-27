@@ -1291,7 +1291,6 @@ if !ERRORLEVEL! equ 0 (
     echo Hiding Recently Added Apps in Start Menu
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "HideRecentlyAddedApps" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-
 findstr /c:"Hide Most Used Apps in Start Menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Hiding Most Used Apps in Start Menu
