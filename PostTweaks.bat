@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.1.1"
-set "VERSION_INFO=26/03/2022"
+set "VERSION=2.1.2"
+set "VERSION_INFO=27/03/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -213,7 +213,7 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f >nul 2>&1
     reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
-    del /f /q"%WinDir%\System32\mcupdate_GenuineIntel.dll" >nul 2>&1
+    del /f /q "%WinDir%\System32\mcupdate_GenuineIntel.dll" >nul 2>&1
     del /f /q "%WinDir%\System32\mcupdate_AuthenticAMD.dll" >nul 2>&1
 )
 findstr /c:"Disable CFG Lock" "%TMP%\security.txt" >nul 2>&1
@@ -224,7 +224,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable ASLR" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling ASLR
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "MoveImages" /t REG_DWORD /d "0" /f
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "MoveImages" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable SEHOP" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -879,6 +879,7 @@ if "!POWER_SAVING!"=="OFF" (
     call:NIC_SETTINGS "EnablePowerManagement" "0"
     call:NIC_SETTINGS "EnableDynamicPowerGating" "0"
     call:NIC_SETTINGS "EnableConnectedPowerGating" "0"
+    call:NIC_SETTINGS "*NicAutoPowerSaver" "0"
     call:NIC_SETTINGS "*EEE" "0"
     call:NIC_SETTINGS "EEE" "0"
     call:NIC_SETTINGS "AdvancedEEE" "0"
