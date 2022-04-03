@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.1.2"
-set "VERSION_INFO=27/03/2022"
+set "VERSION=2.1.3"
+set "VERSION_INFO=28/03/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -684,7 +684,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable Bluetooth support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Bluetooth support
-    for %%i in (BTAGService bthserv BthAvctpSvc NaturalAuthentication BluetoothUserService) do (
+    for %%i in (BTAGService bthserv BthAvctpSvc NaturalAuthentication BluetoothUserService CDPUserSvc) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
@@ -861,6 +861,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "DnsPr
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "NetbtPriority" /t REG_DWORD /d "7" /f >nul 2>&1
 call:MSGBOX "Would you like to disable Nagle's Algorithm ?\n\nDisabling nagling can reduce latency/ping in some games.\nKeep in mind that disabling Nagle's algorithm may also have some negative effect on file transfers." vbYesNo+vbQuestion "Network"
 if !ERRORLEVEL! equ 6 (
+    echo Disabling Nagle's Algorithm
     for /f %%i in ('wmic path win32_networkadapter get GUID^| findstr "{"') do (
         reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpAckFrequency" /t REG_DWORD /d "1" /f
         reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpDelAckTicks" /t REG_DWORD /d "0" /f
@@ -2133,7 +2134,7 @@ for /f "tokens=1,2*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\C
 goto:eof
 
 :POWERSHELL
-chcp 437 >nul 2>&1 & powershell -ExecutionPolicy Bypass -Scope CurrentUser -Force -Command %* >nul 2>&1 & chcp 65001 >nul 2>&1
+chcp 437 >nul 2>&1 & powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command %* >nul 2>&1 & chcp 65001 >nul 2>&1
 goto:eof
 
 :CHOCO [Package]
