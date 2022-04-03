@@ -554,7 +554,7 @@ if "!GPU!"=="INTEL" (
 echo Disabling Services
 for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "ErrorControl"^| findstr "HKEY"') do reg add "%%i" /v "ErrorControl" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dhcp" /v "DependOnService" /t REG_MULTI_SZ /d "NSI\0Afd" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache" /v "DependOnService" /t REG_MULTI_SZ /d "nsi" /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache" /v "DependOnService" /t REG_MULTI_SZ /d "nsi" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
 for %%i in (AcpiDev acpipagr AcpiPmi Acpitime bam Beep cnghwassist CompositeBus CSC dam
     fvevol GpuEnergyDrv MsLldp NetBIOS NetBT PEAUTH rspndr tcpipreg tdx umbus ws2ifsl
