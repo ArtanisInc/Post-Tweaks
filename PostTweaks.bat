@@ -606,7 +606,6 @@ if !ERRORLEVEL! equ 0 (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v "DisableStoreApps" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v "RemoveWindowsStore" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable Xbox Apps" "%TMP%\services.txt" >nul 2>&1
