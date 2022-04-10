@@ -790,9 +790,6 @@ echo Cleanning non-present devices
 call "modules\devicecleanup.exe" * -s -n >nul 2>&1
 
 if "!POWER_SAVING!"=="OFF" (
-    echo Disabling devices power management
-    call:POWERSHELL "$devices = Get-WmiObject Win32_PnPEntity; $powerMgmt = Get-WmiObject MSPower_DeviceEnable -Namespace root\wmi; foreach ($p in $powerMgmt){$IN = $p.InstanceName.ToUpper(); foreach ($h in $devices){$PNPDI = $h.PNPDeviceID; if ($IN -like \"*$PNPDI*\"){$p.enable = $False; $p.psbase.put()}}}"
-
     echo Disabling storage power savings
     for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (EnableHIPM EnableDIPM EnableHDDParking) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "%%i" ^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -801,8 +798,7 @@ if "!POWER_SAVING!"=="OFF" (
     echo Disabling USB power savings
     for %%i in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended
         SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled
-        D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState
-    ) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
+        D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 
 call:MSGBOX "Install Timer Resolution Service ?\n\nChange your Windows timer resolution to 0.5ms to improve performance and responsiveness for games and peripherals." vbYesNo+vbQuestion "Timer Resolution"
@@ -869,6 +865,8 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "DoNotHoldNic
 
 echo Applying NIC settings
 if "!POWER_SAVING!"=="OFF" (
+	call:NIC_SETTINGS "PnPCapabilities" "24"
+    call:NIC_SETTINGS "PowerDownPll" "0"
     call:NIC_SETTINGS "*DeviceSleepOnDisconnect" "0"
     call:NIC_SETTINGS "AutoPowerSaveModeEnabled" "0"
     call:NIC_SETTINGS "EEELinkAdvertisement" "0"
