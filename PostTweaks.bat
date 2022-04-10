@@ -811,6 +811,7 @@ if "!POWER_SAVING!"=="OFF" (
 
 call:MSGBOX "Install Timer Resolution Service ?\n\nChange your Windows timer resolution to 0.5ms to improve performance and responsiveness for games and peripherals." vbYesNo+vbQuestion "Timer Resolution"
 if !ERRORLEVEL! equ 6 (
+    if "!VC!"=="NOT_INSTALLED" call:CHOCO vcredist-all
     echo Installing Timer Resolution Service
     if not exist "%WinDir%\SetTimerResolutionService.exe" copy "resources\SetTimerResolutionService.exe" "%WinDir%" >nul 2>&1
     call "%WinDir%\SetTimerResolutionService.exe" -Install >nul 2>&1
@@ -2122,6 +2123,9 @@ for /f "skip=1" %%i in ('wmic CPU get NumberOfLogicalProcessors') do set "LOGICA
 if !CORE! lss !LOGICAL_PROCESSORS! (set "HT_SMT=ON") else set "HT_SMT=OFF"
 REM Check Wi-Fi
 wmic path WIN32_NetworkAdapter where NetConnectionID="Wi-Fi" get NetConnectionStatus | findstr "2" >nul 2>&1 && set "NIC_TYPE=WIFI"
+REM Check VC++ Redistributable
+reg query "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes" /ve >nul 2>&1
+if !ERRORLEVEL! equ 1 set "VC=NOT_INSTALLED"
 REM SvcHost
 for /f "skip=1" %%i in ('wmic os get TotalVisibleMemorySize') do if not defined SVCHOST (set /a SVCHOST=%%i+1024000)
 REM User SID
