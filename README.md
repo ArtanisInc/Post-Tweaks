@@ -20,7 +20,7 @@ Post Tweaks aims to improve the responsiveness, performance and privacy of Windo
 - Stable internet connection
 
 ## Download
-Get the latest version 2.1.3 (03/04/2022) [here](https://codeload.github.com/ArtanisInc/Post-Tweaks/zip/main).
+Get the latest version 2.1.4 (10/04/2022) [here](https://codeload.github.com/ArtanisInc/Post-Tweaks/zip/main).
 
 ## Contributing
 If you're a developer or just a software user you can help the project by:
