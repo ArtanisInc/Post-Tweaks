@@ -5,7 +5,7 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.1.4"
+set "VERSION=2.1.5"
 set "VERSION_INFO=10/04/2022"
 
 call:SETCONSTANTS >nul 2>&1
@@ -2091,7 +2091,7 @@ call:MSGBOX "Revision community - Learned a lot about PC Tweaking\nTheBATeam com
 goto MAIN_MENU
 
 :HELP
-call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essentials programs in the background.\n\nOptions:\n\n- SYSTEM TWEAKS\n   > Services optimization\n   > Network optimization\n   > Improve privacy\n   > Global system and visual optimization\n\n- SOFTWARE INSTALLER\nDisplay a selection menu that let you downloads and installs essentials programs automatically in the background.\n\n- TOOLS\nDisplay a selection menu that let you downloads useful tools." vbInformation "Help"
+call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essentials programs in the background.\n\nOptions:\n\n1) SYSTEM TWEAKS\n   ● Disable unnecessary services\n   ● Disable power saving features\n   ● Disable telemetry\n   ● Optimize drivers\n   ● Optimize network\n   ● Global system and visual optimization\n\n2) SOFTWARE INSTALLER\nDisplay a selection menu that let you downloads and installs essentials programs automatically in the background.\n\n3) TOOLS\nDisplay a selection menu that let you downloads useful tools." vbInformation "Help"
 goto MAIN_MENU
 
 REM =====================================================
