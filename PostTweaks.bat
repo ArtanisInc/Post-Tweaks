@@ -566,7 +566,7 @@ if "!PC_TYPE!"=="DESKTOP" (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WmiAcpi" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 
-call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Windows Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Files and Printers share support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable Remote support;Disable VPN support;Disable IPv6 support;Disable QoS support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
+call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Microsoft Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Files and Printers share support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable Remote support;Disable VPN support;Disable IPv6 support;Disable QoS support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
 findstr /c:"Disable Windows Search" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Search
@@ -597,9 +597,9 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableLibrariesDefaultSaveToOneDrive" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\OneDrive" /v "DisablePersonalSync" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable Windows Store" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable Microsoft Store" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Store
+    echo Disabling Microsoft Store
     for %%i in (iphlpsvc ClipSVC AppXSvc LicenseManager TokenBroker WalletService) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
@@ -777,8 +777,6 @@ del /f /q "%TMP%\services.txt" >nul 2>&1
 
 echo Disabling devices
 call "modules/DevManView.exe" /disable "High Precision Event Timer"
-call "modules/DevManView.exe" /disable "Programmable Interrupt Controller"
-call "modules/DevManView.exe" /disable "System Speaker"
 call "modules/DevManView.exe" /disable "Composite Bus Enumerator"
 call "modules/DevManView.exe" /disable "UMBus Root Bus Enumerator"
 call "modules/DevManView.exe" /disable "SM Bus Controller"
