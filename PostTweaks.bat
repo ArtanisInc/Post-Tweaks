@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.1.3"
-set "VERSION_INFO=03/04/2022"
+set "VERSION=2.1.4"
+set "VERSION_INFO=10/04/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -146,7 +146,7 @@ echo Disabling Windows settings synchronization
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync" /v "SyncPolicy" /t REG_DWORD /d "5" /f >nul 2>&1
 for %%i in (Accessibility AppSync BrowserSettings Credentials DesktopTheme Language PackageState Personalization StartLayout Windows) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\%%i" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
-if "!PC_TYPE!"=="LAPTOP" (
+if "!PC_TYPE!"=="LAPTOP/TABLET" (
     call:MSGBOX "Would you like to disable power saving features ?\n\nDisabling power saving will decrease battery life, but performance will be improved." vbYesNo+vbQuestion "Power saving"
     if !ERRORLEVEL! equ 6 set "POWER_SAVING=OFF"
 ) else set "POWER_SAVING=OFF"
@@ -865,7 +865,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "DoNotHoldNic
 
 echo Applying NIC settings
 if "!POWER_SAVING!"=="OFF" (
-	call:NIC_SETTINGS "PnPCapabilities" "24"
+    call:NIC_SETTINGS "PnPCapabilities" "24"
     call:NIC_SETTINGS "PowerDownPll" "0"
     call:NIC_SETTINGS "*DeviceSleepOnDisconnect" "0"
     call:NIC_SETTINGS "AutoPowerSaveModeEnabled" "0"
@@ -2097,14 +2097,15 @@ goto MAIN_MENU
 REM =====================================================
 REM ==================    FONCTIONS    ==================
 REM =====================================================
+
 :SETCONSTANTS
 REM Colors and text format
 set "CMDLINE=RED=[31m,S_GRAY=[90m,S_RED=[91m,S_GREEN=[92m,S_YELLOW=[93m,S_MAGENTA=[95m,S_WHITE=[97m,B_BLACK=[40m,B_YELLOW=[43m,UNDERLINE=[4m,_UNDERLINE=[24m"
 set "%CMDLINE:,=" & set "%"
-REM Check Laptop
-set "PC_TYPE=DESKTOP"
-for /f %%i in ('wmic path Win32_systemenclosure get ChassisTypes^| findstr [0-9]') do set "CHASSIS=%%i"
-for %%i in ("{8}" "{9}" "{10}" "{11}" "{12}" "{14}" "{18}" "{21}" "{31}") do if "!CHASSIS!"=="%%~i" set "PC_TYPE=LAPTOP"
+REM Check Computer type
+for /f "delims=:{}" %%i in ('wmic path Win32_systemenclosure get ChassisTypes^| findstr [0-9]') do set "CHASSIS=%%i"
+for %%i in (8 9 10 11 12 14 18 21 13 31 32 30) do if "!CHASSIS!"=="%%i" set "PC_TYPE=LAPTOP/TABLET"
+for %%i in (3 4 5 6 7 15 16 34 35 36) do if "!CHASSIS!"=="%%i" set "PC_TYPE=DESKTOP"
 REM Check SSD
 for /f %%i in ('call "modules\smartctl.exe" --scan') do call "modules\smartctl.exe" %%i -a^| findstr /i "Solid SSD RAID SandForce" >nul 2>&1 && set "STORAGE_TYPE=SSD"
 REM Check GPU
