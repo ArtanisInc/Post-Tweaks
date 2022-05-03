@@ -535,36 +535,19 @@ if "!GPU!"=="INTEL" (
     ) >nul 2>&1
 )
 
-echo Disabling Services
-for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "ErrorControl"^| findstr "HKEY"') do reg add "%%i" /v "ErrorControl" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dhcp" /v "DependOnService" /t REG_MULTI_SZ /d "NSI\0Afd" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache" /v "DependOnService" /t REG_MULTI_SZ /d "nsi" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
-for %%i in (AcpiDev acpipagr AcpiPmi Acpitime bam Beep cnghwassist CompositeBus CSC dam
-    fvevol GpuEnergyDrv MsLldp NetBIOS NetBT PEAUTH rspndr tcpipreg tdx umbus ws2ifsl
-    DiagTrack dmwappushservice diagnosticshub.standardcollector.service RetailDemo WinRM
-    WMPNetworkSvc edgeupdate edgeupdatem MapsBroker "FontCache3.0.0.0" NvTelemetryContainer amdlog) do (
-    reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%i" /ve >nul 2>&1
-    if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%i" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-)
-if "!PC_TYPE!"=="DESKTOP" (
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\msisadrv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\WmiAcpi" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-)
-
-call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Microsoft Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Files and Printers share support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable Remote support;Disable VPN support;Disable IPv6 support;Disable QoS support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
+call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Microsoft Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Files and Printers share support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable Remote support;Disable VPN support;Disable Bitlocker support;Disable IPv6 support;Disable QoS support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
 findstr /c:"Disable Windows Search" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Search
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wsearch" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" (
-        taskkill /f /im "SearchUI.exe" >nul 2>&1
-        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" >nul 2>&1
-    )
+        taskkill /f /im "SearchUI.exe"
+        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" 
+    ) >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" (
-        taskkill /f /im "SearchApp.exe" >nul 2>&1
-        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" >nul 2>&1
-    )
+        taskkill /f /im "SearchApp.exe"
+        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy"
+    ) >nul 2>&1
 )
 findstr /c:"Disable OneDrive" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -587,16 +570,18 @@ findstr /c:"Disable Microsoft Store" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Microsoft Store
     for %%i in (iphlpsvc ClipSVC AppXSvc LicenseManager TokenBroker WalletService) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v "RemoveWindowsStore" /t REG_DWORD /d "1" /f >nul 2>&1
+    call:POWERSHELL "Get-AppxPackage \"Microsoft.WindowsStore\" | Remove-AppxPackage"
+    call:POWERSHELL "Get-AppxPackage \"Microsoft.StorePurchaseApp\" | Remove-AppxPackage"
 )
 findstr /c:"Disable Xbox Apps" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Xbox Apps
     for %%i in (XblGameSave XblAuthManager XboxNetApiSvc XboxGipSvc xbgm) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
     call:POWERSHELL "$AppxPackages = @(\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\");foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -Name $AppxPackage -AllUsers | Remove-AppxPackage -AllUsers}"
@@ -630,7 +615,7 @@ findstr /c:"Disable Diagnostics" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Diagnostics
     for %%i in (diagsvc DPS WdiServiceHost WdiSystemHost) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
@@ -652,15 +637,15 @@ findstr /c:"Disable Windows Update" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Update
     for %%i in (wuauserv WaaSMedicSvc PeerDistSvc UsoSvc) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
 findstr /c:"Disable Wi-Fi support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Wi-Fi support
-    for %%i in (WwanSvc WlanSvc wcncsvc lmhosts vwififlt vwifibus NativeWifiP Ndisuio) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+    for %%i in (WwanSvc WlanSvc wcncsvc vwififlt vwifibus NativeWifiP Ndisuio) do (
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
@@ -668,7 +653,7 @@ findstr /c:"Disable Bluetooth support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Bluetooth support
     for %%i in (BTAGService bthserv BthAvctpSvc NaturalAuthentication BluetoothUserService CDPUserSvc) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
@@ -676,7 +661,7 @@ findstr /c:"Disable Printer support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Printer support
     for %%i in (Fax Spooler PrintNotify PrintWorkflowUserSvc) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
@@ -689,8 +674,8 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable Hyper-V support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Hyper-V support
-    for %%i in (HvHost vmickvpexchange vmicguestinterface vmicshutdown vmicheartbeat vmicvmsession vmicrdv vmictimesync vmicvss) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+    for %%i in (HvHost vmickvpexchange vmicguestinterface vmicshutdown vmicheartbeat vmicvmsession vmicrdv vmictimesync vmicvss Wcifs) do (
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
@@ -704,7 +689,7 @@ findstr /c:"Disable Smart Card support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Smart Card support
     for %%i in (SCardSvr ScDeviceEnum SCPolicySvc CertPropSvc) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
@@ -723,7 +708,7 @@ findstr /c:"Disable Remote support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Remote support
     for %%i in (RasAuto RasMan SessionEnv TermService UmRdpService RpcLocator RemoteAccess RemoteRegistry) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -733,9 +718,17 @@ findstr /c:"Disable VPN support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling VPN support
     for %%i in (IKEEXT WinHttpAutoProxySvc RasMan SstpSvc iphlpsvc NdisVirtualBus Eaphost) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
+)
+findstr /c:"Disable Bitlocker support" "%TMP%\services.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling bitlocker support
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\fvevol" /v "ErrorControl" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\fvevol" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\BDESVC" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 findstr /c:"Disable IPv6 support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1395,7 +1388,7 @@ findstr /c:"Restore Classic Windows Photo Viewer" "%TMP%\interface.txt" >nul 2>&
 if !ERRORLEVEL! equ 0 (
     echo Restoring Classic Windows Photo Viewer
     for %%i in (tif tiff bmp dib gif jfif jpe jpeg jpg jxr png) do (
-        reg add "HKLM\SOFTWARE\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /v ".%%~i" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff" /f >nul 2>&1
+        reg add "HKLM\SOFTWARE\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /v ".%%~i" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff" /f
     ) >nul 2>&1
 )
 findstr /c:"Enable Classic Volume Control" "%TMP%\interface.txt" >nul 2>&1
@@ -1615,7 +1608,7 @@ timeout /t 1 /nobreak >nul 2>&1
 goto MAIN_MENU
 
 :APPS_MENU_CLEAR
-set APPS_MENU="Google Chrome" "Mozilla Firefox" "Brave" "Opera GX" "Microsoft Edge" "Vivaldi" "Deezer" "Spotify" "iTunes" "PotPlayer" "VLC media player" "Audacity" "ImageGlass" "ShareX" "GIMP" "Discord" "TeamSpeak" "Teams" "Zoom" "Slack" "Adobe Acrobat Reader" "Foxit Reader" "Microsoft Office" "Libre Office" "7zip" "Winrar" "Visual Studio Code" "Notepad++" "FileZilla" "WinSCP" "PuTTY" "Python" "Java Runtime Environment 8" "Node.JS" "Steam" "GOG Galaxy" "Epic Games" "Uplay" "Battle.net" "Origin" "VirtualBox" "VMware Workstation Pro" "VMware Workstation Player" "TeamViewer" "AnyDesk" "qBittorrent" "Bulk Crap Uninstaller" "Everything" "MSI Afterburner" "Visual C++ Redistributables" "DirectX" ".NET Framework 4.8"
+set APPS_MENU="Google Chrome" "Mozilla Firefox" "Brave" "Opera GX" "Microsoft Edge" "Vivaldi" "Deezer" "Spotify" "iTunes" "PotPlayer" "VLC media player" "Audacity" "ImageGlass" "ShareX" "GIMP" "Discord" "TeamSpeak" "Teams" "Zoom" "Slack" "Adobe Acrobat Reader" "Foxit Reader" "Microsoft Office" "Libre Office" "7zip" "Winrar" "Visual Studio Code" "Notepad++" "FileZilla" "WinSCP" "PuTTY" "Python 3" "Java Runtime Environment 8" "Node.JS" "Steam" "GOG Galaxy" "Epic Games" "Uplay" "Battle.net" "Origin" "VirtualBox" "VMware Workstation Pro" "VMware Workstation Player" "TeamViewer" "AnyDesk" "qBittorrent" "Bulk Crap Uninstaller" "Everything" "MSI Afterburner" "Visual C++ Redistributables" "DirectX" ".NET Framework 4.8"
 for %%i in (!APPS_MENU!) do set "%%~i=!S_MAGENTA![ ]!S_WHITE! %%~i"
 
 :APPS_MENU
@@ -1650,7 +1643,7 @@ echo              !S_GREEN!28 !Notepad++!                             !S_GREEN!3
 echo              !S_GREEN!29 !FileZilla!                             !S_GREEN!37 !Epic Games!                            !S_GREEN!43 !VMware Workstation Player!
 echo              !S_GREEN!30 !WinSCP!                                !S_GREEN!38 !Uplay!                                 !S_GREEN!44 !TeamViewer!
 echo              !S_GREEN!31 !PuTTY!                                 !S_GREEN!39 !Battle.net!                            !S_GREEN!45 !AnyDesk!
-echo              !S_GREEN!32 !Python!                                !S_GREEN!40 !Origin!                                !S_GREEN!46 !qBittorrent!
+echo              !S_GREEN!32 !Python 3!                                !S_GREEN!40 !Origin!                                !S_GREEN!46 !qBittorrent!
 echo              !S_GREEN!33 !Java Runtime Environment 8!                                                         !S_GREEN!47 !Bulk Crap Uninstaller!
 echo              !S_GREEN!34 !Node.JS!                                                                            !S_GREEN!48 !Everything!
 echo                                                                                                        !S_GREEN!49 !MSI Afterburner!
@@ -1702,7 +1695,7 @@ if "!choice!"=="28" if "!Notepad++!"=="!S_MAGENTA![ ]!S_WHITE! Notepad++" (set "
 if "!choice!"=="29" if "!FileZilla!"=="!S_MAGENTA![ ]!S_WHITE! FileZilla" (set "FileZilla=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! FileZilla") else set "FileZilla=!S_MAGENTA![ ]!S_WHITE! FileZilla"
 if "!choice!"=="30" if "!WinSCP!"=="!S_MAGENTA![ ]!S_WHITE! WinSCP" (set "WinSCP=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! WinSCP") else set "WinSCP=!S_MAGENTA![ ]!S_WHITE! WinSCP"
 if "!choice!"=="31" if "!PuTTY!"=="!S_MAGENTA![ ]!S_WHITE! PuTTY" (set "PuTTY=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! PuTTY") else set "PuTTY=!S_MAGENTA![ ]!S_WHITE! PuTTY"
-if "!choice!"=="32" if "!Python!"=="!S_MAGENTA![ ]!S_WHITE! Python" (set "Python=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Python") else set "Python=!S_MAGENTA![ ]!S_WHITE! Python"
+if "!choice!"=="32" if "!Python 3!"=="!S_MAGENTA![ ]!S_WHITE! Python 3" (set "Python 3=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Python 3") else set "Python 3=!S_MAGENTA![ ]!S_WHITE! Python 3"
 if "!choice!"=="33" if "!Java Runtime Environment 8!"=="!S_MAGENTA![ ]!S_WHITE! Java Runtime Environment 8" (set "Java Runtime Environment 8=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Java Runtime Environment 8") else set "Java Runtime Environment 8=!S_MAGENTA![ ]!S_WHITE! Java Runtime Environment 8"
 if "!choice!"=="34" if "!Node.JS!"=="!S_MAGENTA![ ]!S_WHITE! Node.JS" (set "Node.JS=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Node.JS") else set "Node.JS=!S_MAGENTA![ ]!S_WHITE! Node.JS"
 REM GAMES LAUNCHER
@@ -1767,7 +1760,7 @@ if "!Slack!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Slack" call:CHOCO sla
 REM DOCUMENTS
 if "!Adobe Acrobat Reader!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Adobe Acrobat Reader" call:CHOCO adobereader
 if "!Foxit Reader!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Foxit Reader" call:CHOCO foxitreader
-if "!Microsoft Office!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Microsoft Office" call:CHOCO office-tool & call:SHORTCUT "Office Tool Plus" "%UserProfile%\desktop" "%LocalAppData%\Office Tool\Office Tool Plus.exe" "%LocalAppData%\Office Tool"
+if "!Microsoft Office!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Microsoft Office" call:CHOCO office-tool & call:SHORTCUT "Office Tool Plus" "%UserProfile%\desktop" "%LocalAppData%\office-tool\Office Tool\Office Tool Plus.exe" "%LocalAppData%\office-tool\Office Tool"
 if "!Libre Office!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Libre Office" call:CHOCO libreoffice-fresh
 REM COMPRESSION
 if "!7zip!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! 7zip" call:CHOCO 7zip.install
@@ -1778,7 +1771,7 @@ if "!Notepad++!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Notepad++" call:C
 if "!FileZilla!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! FileZilla" call:CHOCO filezilla
 if "!WinSCP!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! WinSCP" call:CHOCO winscp
 if "!PuTTY!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! PuTTY" call:CHOCO putty & call:SHORTCUT "PuTTY" "%UserProfile%\desktop" "%ProgramData%\chocolatey\bin\PUTTY.exe" "\ProgramData\chocolatey\bin"
-if "!Python!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Python" call:CHOCO python
+if "!Python 3!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Python 3" call:CHOCO python
 if "!Java Runtime Environment 8!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Java Runtime Environment 8" call:CHOCO jre8
 if "!Node.JS!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Node.JS" call:CHOCO nodejs
 REM GAMES LAUNCHER
@@ -2064,7 +2057,7 @@ call:MSGBOX "Revision community - Learned a lot about PC Tweaking\nTheBATeam com
 goto MAIN_MENU
 
 :HELP
-call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essentials programs in the background.\n\nOptions:\n\n1) SYSTEM TWEAKS\n   ● Disable unnecessary services\n   ● Disable power saving features\n   ● Disable telemetry\n   ● Optimize drivers\n   ● Optimize network\n   ● Global system and visual optimization\n\n2) SOFTWARE INSTALLER\nDisplay a selection menu that let you downloads and installs essentials programs automatically in the background.\n\n3) TOOLS\nDisplay a selection menu that let you downloads useful tools." vbInformation "Help"
+call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essentials programs in the background.\n\nOptions:\n\n1) SYSTEM TWEAKS\n   ● Remove unnecessary Microsoft apps\n   ● Disable unnecessary services\n   ● Disable power saving features\n   ● Disable telemetry\n   ● Optimize drivers\n   ● Optimize network\n   ● Personalize Windows\n\n2) SOFTWARE INSTALLER\nDisplay a selection menu that let you downloads and installs essentials programs automatically in the background.\n\n3) TOOLS\nDisplay a selection menu that let you downloads useful tools." vbInformation "Help"
 goto MAIN_MENU
 
 REM =====================================================
@@ -2078,16 +2071,15 @@ set "%CMDLINE:,=" & set "%"
 REM Check Computer type
 for /f "delims=:{}" %%i in ('wmic path Win32_systemenclosure get ChassisTypes^| findstr [0-9]') do set "CHASSIS=%%i"
 for %%i in (8 9 10 11 12 14 18 21 13 31 32 30) do if "!CHASSIS!"=="%%i" set "PC_TYPE=LAPTOP/TABLET"
-for %%i in (3 4 5 6 7 15 16 34 35 36) do if "!CHASSIS!"=="%%i" set "PC_TYPE=DESKTOP"
 REM Check SSD
-for /f %%i in ('call "modules\smartctl.exe" --scan') do call "modules\smartctl.exe" %%i -a^| findstr /i "Solid SSD RAID SandForce" >nul 2>&1 && set "STORAGE_TYPE=SSD"
+for /f %%i in ('call "modules\smartctl.exe" --scan') do call "modules\smartctl.exe" %%i -a^| findstr /i "Rotation Rate:"^| findstr /i "Solid SSD RAID SandForce" >nul 2>&1 && set "STORAGE_TYPE=SSD"
 REM Check GPU
 wmic path Win32_VideoController get Name | findstr "NVIDIA" >nul 2>&1 && set "GPU=NVIDIA"
 wmic path Win32_VideoController get Name | findstr "AMD ATI" >nul 2>&1 && set "GPU=AMD"
 wmic path Win32_VideoController get Name | findstr "Intel" >nul 2>&1 && set "GPU=INTEL"
 REM Check HT/SMT
-for /f "skip=1" %%i in ('wmic CPU get NumberOfCores') do set "CORES=%%i"
-for /f "skip=1" %%i in ('wmic CPU get NumberOfLogicalProcessors') do set "LOGICAL_PROCESSORS=%%i"
+for /f "skip=1" %%i in ('wmic CPU get NumberOfCores^| findstr [0-9]') do set "CORES=%%i"
+for /f "skip=1" %%i in ('wmic CPU get NumberOfLogicalProcessors^| findstr [0-9]') do set "LOGICAL_PROCESSORS=%%i"
 if !CORE! lss !LOGICAL_PROCESSORS! (set "HT_SMT=ON") else set "HT_SMT=OFF"
 REM Check Wi-Fi
 wmic path WIN32_NetworkAdapter where NetConnectionID="Wi-Fi" get NetConnectionStatus | findstr "2" >nul 2>&1 && set "NIC_TYPE=WIFI"
