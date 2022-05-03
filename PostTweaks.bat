@@ -74,7 +74,7 @@ if /i !VERSION! lss !LATEST_VERSION! (
     cls
 )
 
-set "NEEDEDFILES=modules/7z.exe modules/7z.dll modules/choicebox.exe modules/nsudo.exe modules/smartctl.exe modules/devicecleanup.exe modules/DevManView.exe resources/procexp.exe resources/PostTweaks.pow resources/SetTimerResolutionService.exe resources/nvidiaProfileInspector.exe resources/BaseProfile.nip"
+set "NEEDEDFILES=modules/7z.exe modules/7z.dll modules/choicebox.exe modules/nsudo.exe modules/smartctl.exe resources/procexp.exe resources/PostTweaks.pow resources/SetTimerResolutionService.exe resources/nvidiaProfileInspector.exe resources/BaseProfile.nip"
 for %%i in (!NEEDEDFILES!) do (
     if not exist %%i (
         set "MISSINGFILES=True"
@@ -136,11 +136,6 @@ echo Setting TEMP and TMP Environment variables
 if exist "%LOCALAPPDATA%\TEMP" rd /s /q "%LOCALAPPDATA%\TEMP" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Environment" /v "TMP" /t REG_SZ /d "%USERPROFILE%\AppData\Local\Temp" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Environment" /v "TEMP" /t REG_SZ /d "%USERPROFILE%\AppData\Local\Temp" /f >nul 2>&1
-
-echo Applying BCDEDIT settings
-bcdedit /deletevalue useplatformclock >nul 2>&1
-bcdedit /set disabledynamictick Yes >nul 2>&1
-bcdedit /set useplatformtick Yes >nul 2>&1
 
 echo Disabling Windows settings synchronization
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync" /v "SyncPolicy" /t REG_DWORD /d "5" /f >nul 2>&1
@@ -746,16 +741,6 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable VPN support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling VPN support
-    call "modules/DevManView.exe" /disable "WAN Miniport (IKEv2)"
-    call "modules/DevManView.exe" /disable "WAN Miniport (IP)"
-    call "modules/DevManView.exe" /disable "WAN Miniport (IPv6)"
-    call "modules/DevManView.exe" /disable "WAN Miniport (L2TP)"
-    call "modules/DevManView.exe" /disable "WAN Miniport (Network Monitor)"
-    call "modules/DevManView.exe" /disable "WAN Miniport (PPPOE)"
-    call "modules/DevManView.exe" /disable "WAN Miniport (PPTP)"
-    call "modules/DevManView.exe" /disable "WAN Miniport (SSTP)"
-    call "modules/DevManView.exe" /disable "NDIS Virtual Network Adapter Enumerator"
-    call "modules/DevManView.exe" /disable "Microsoft RRAS Root Enumerator"
     for %%i in (IKEEXT WinHttpAutoProxySvc RasMan SstpSvc iphlpsvc NdisVirtualBus Eaphost) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve >nul 2>&1
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
@@ -775,19 +760,16 @@ if !ERRORLEVEL! equ 0 (
 )
 del /f /q "%TMP%\services.txt" >nul 2>&1
 
-echo Disabling devices
-call "modules/DevManView.exe" /disable "High Precision Event Timer"
-call "modules/DevManView.exe" /disable "Composite Bus Enumerator"
-call "modules/DevManView.exe" /disable "UMBus Root Bus Enumerator"
-call "modules/DevManView.exe" /disable "SM Bus Controller"
-call "modules/DevManView.exe" /disable "AMD SMBus"
-call "modules/DevManView.exe" /disable "Intel SMBus"
-call "modules/DevManView.exe" /disable "AMD PSP"
-call "modules/DevManView.exe" /disable "Intel Management Engine"
-call "modules/DevManView.exe" /disable "Microsoft Kernel Debug Network Adapter"
-
 echo Cleanning non-present devices
-call "modules\devicecleanup.exe" * -s -n >nul 2>&1
+call:POWERSHEll "$Devices = Get-PnpDevice | ? Status -eq Unknown;foreach ($Device in $Devices) { &\"pnputil\" /remove-device $Device.InstanceId }"
+
+echo Disabling HPET
+bcdedit /deletevalue useplatformclock >nul 2>&1
+bcdedit /set disabledynamictick Yes >nul 2>&1
+call:POWERSHELL "Get-PnpDevice | Where-Object { $_.InstanceId -like 'ACPI\PNP0103\2&daba3ff&1' } | Disable-PnpDevice -Confirm:$false"
+
+echo Disabling synthetic timer
+bcdedit /set useplatformtick Yes >nul 2>&1
 
 if "!POWER_SAVING!"=="OFF" (
     echo Disabling storage power savings
