@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.1.5"
-set "VERSION_INFO=10/04/2022"
+set "VERSION=2.1.6"
+set "VERSION_INFO=03/05/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
