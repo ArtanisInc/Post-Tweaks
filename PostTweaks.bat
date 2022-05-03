@@ -1300,16 +1300,16 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Unpin all Start Menu tiles" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Unpinning all Start Menu tiles
-    echo ^<LayoutModificationTemplate xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" Version="1" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification"^> >"%UserProfile%\StartLayout.xml"
-    echo ^<LayoutOptions StartTileGroupCellWidth="6" /^> >>"%UserProfile%\StartLayout.xml"
-    echo ^<DefaultLayoutOverride^> >>"%UserProfile%\StartLayout.xml"
-    echo    ^<StartLayoutCollection^> >>"%UserProfile%\StartLayout.xml"
-    echo        ^<defaultlayout:StartLayout GroupCellWidth="6" /^> >>"%UserProfile%\StartLayout.xml"
-    echo    ^</StartLayoutCollection^> >>"%UserProfile%\StartLayout.xml"
-    echo ^</DefaultLayoutOverride^> >>"%UserProfile%\StartLayout.xml"
-    echo ^</LayoutModificationTemplate^> >>"%UserProfile%\StartLayout.xml"
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "LockedStartLayout" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "StartLayoutFile" /t REG_DWORD /d "%UserProfile%\StartLayout.xml" /f >nul 2>&1
+    echo ^<LayoutModificationTemplate Version="1" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification" xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" xmlns:taskbar="http://schemas.microsoft.com/Start/2014/TaskbarLayout"^> >"%TMP%\StartLayout.xml"
+    echo ^<LayoutOptions StartTileGroupCellWidth="6" /^> >>"%TMP%\StartLayout.xml"
+    echo ^<DefaultLayoutOverride^> >>"%TMP%\StartLayout.xml"
+    echo    ^<StartLayoutCollection^> >>"%TMP%\StartLayout.xml"
+    echo        ^<defaultlayout:StartLayout GroupCellWidth="6" xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout"^> >>"%TMP%\StartLayout.xml"
+    echo        ^</defaultlayout:StartLayout^> >>"%TMP%\StartLayout.xml"
+    echo    ^</StartLayoutCollection^> >>"%TMP%\StartLayout.xml"
+    echo ^</DefaultLayoutOverride^> >>"%TMP%\StartLayout.xml"
+    echo ^</LayoutModificationTemplate^> >>"%TMP%\StartLayout.xml"
+    call:POWERSHELL "import-startlayout -layoutpath $Env:TMP\StartLayout.xml -mountpath $Env:USERPROFILE"
 )
 findstr /c:"Increase Taskbar Transparency Level" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
