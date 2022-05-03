@@ -271,16 +271,6 @@ reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPref
 echo Disabling startup sound
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\BootAnimation" /v "DisableStartupSound" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Removing mouse scheme
-reg add "HKU\!USER_SID!\Control Panel\Cursors" /ve /t REG_SZ /d "" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "ContactVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "GestureVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "CursorBaseSize" /t REG_DWORD /d "32" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "Scheme Source" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "Crosshair" /t REG_SZ /d "" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "IBeam" /t REG_SZ /d "" /f >nul 2>&1
-for %%i in (AppStarting Arrow Hand Help No NWPen SizeAll SizeNESW SizeNS SizeNWSE SizeWE UpArrow Wait Person Pin) do reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "%%i" /t REG_SZ /d "" /f >nul 2>&1
-
 echo Enabling num Lock at startup
 reg add "HKU\!USER_SID!\Control Panel\Keyboard" /v "InitialKeyboardIndicators" /t REG_DWORD /d "2" /f >nul 2>&1
 
@@ -290,10 +280,6 @@ reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >nul 2>&1
 
-echo Power settings
-for %%i in (CsEnabled EnergyEstimationEnabled HibernateEnabled HibernateEnabledDefault CoalescingTimerInterval) do reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
-if "!POWER_SAVING!"=="OFF" reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f >nul 2>&1
-
 echo Disabling fast startup
 reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Power" /v "HiberbootEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
@@ -302,26 +288,50 @@ powercfg -delete 11111111-1111-1111-1111-111111111111 >nul 2>&1
 powercfg -import "%~dp0\resources\PostTweaks.pow" 11111111-1111-1111-1111-111111111111 >nul 2>&1
 powercfg -setactive 11111111-1111-1111-1111-111111111111 >nul 2>&1
 
-if "!POWER_SAVING!"=="OFF" if "!HT_SMT!"=="OFF" (
-    call:MSGBOX "Would you like to disable CPU idle state ?\n\nDisabling the CPU idle state reduces latency but increases the CPU temperature." vbYesNo+vbQuestion "Power settings"
-    if !ERRORLEVEL! equ 6 (
-        echo Disabling CPU idle state
-        powercfg -setacvalueindex scheme_current sub_processor 5d76a2ca-e8c0-402f-a133-2158492d58ad 1 >nul 2>&1
-        powercfg -setactive scheme_current >nul 2>&1
+if "!POWER_SAVING!"=="OFF" (
+    echo Disabling power throttling
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f >nul 2>&1
+
+    echo Disabling hibernation
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "HibernateEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+
+    echo Disabling Timer Coalescing
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f >nul 2>&1
+
+    if "!HT_SMT!"=="OFF" (
+        call:MSGBOX "Would you like to disable CPU idle state ?\n\nDisabling the CPU idle state reduces latency but increases the CPU temperature." vbYesNo+vbQuestion "Power settings"
+        if !ERRORLEVEL! equ 6 (
+            echo Disabling CPU idle state
+            powercfg -setacvalueindex scheme_current sub_processor 5d76a2ca-e8c0-402f-a133-2158492d58ad 1 >nul 2>&1
+            powercfg -setactive scheme_current >nul 2>&1
+        )
     )
+
+    echo Disabling storage power savings
+    for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t REG_DWORD /d "0" /f >nul 2>&1
+    for %%i in (EnableHIPM EnableDIPM EnableHDDParking) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "%%i" ^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
+    for /f %%i in ('call "modules\smartctl.exe" --scan') do (
+        call "modules\smartctl.exe" -s apm,off %%i
+        call "modules\smartctl.exe" -s aam,off %%i
+    ) >nul 2>&1
+
+    echo Disabling USB power savings
+    for %%i in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended
+        SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled
+        D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 
-echo Disabling Background apps
+echo Disabling background apps
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo Organize services into associated host groups
 reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /t REG_DWORD /d "!SVCHOST!" /f >nul 2>&1
 
-echo Process Scheduling
+echo Process scheduling
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "38" /f >nul 2>&1
 
-echo Multimedia Class Scheduler
+echo Multimedia class scheduler
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d "10" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NoLazyMode" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -362,7 +372,7 @@ reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\memory management
 echo Disabling Windows attempt to save as much RAM as possible
 reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "DisablePagingCombining" /t REG_DWORD /d "1" /f >nul 2>&1
 
-if !CORES! gtr 5 echo Enabling DistributeTimers & reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "DistributeTimers" /t REG_DWORD /d "1" /f >nul 2>&1
+if !CORES! gtr 6 echo Enabling DistributeTimers & reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "DistributeTimers" /t REG_DWORD /d "1" /f >nul 2>&1
 
 if "!STORAGE_TYPE!"=="SSD" (
     echo Applying SSD Tweaks
@@ -374,6 +384,7 @@ if "!STORAGE_TYPE!"=="SSD" (
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OptimalLayout" /v "EnableAutoLayout" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\SysMain" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\FontCache" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\FontCache3.0.0.0" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\rdyboost" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 
@@ -471,6 +482,7 @@ if "!GPU!"=="NVIDIA" (
     ) >nul 2>&1
 
     echo Disabling Nvidia Telemetry
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\NvTelemetryContainer" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\NVIDIA Corporation\NVControlPanel2\Client" /v "OptInOrOutPreference" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (NvTmMon NvTmRep NvProfile) do for /f "tokens=1 delims=," %%a in ('schtasks /query /fo csv^| findstr /v "TaskName"^| findstr "%%~i"') do schtasks /change /tn "%%a" /disable >nul 2>&1
 
@@ -518,6 +530,9 @@ if "!GPU!"=="AMD" (
         reg add "!REGPATH_AMD!\UMD" /v "VSyncControl" /t REG_BINARY /d "3000" /f
         reg add "!REGPATH_AMD!\UMD" /v "TFQ" /t REG_BINARY /d "3200" /f
     ) >nul 2>&1
+
+    echo Disabling AMD logging service
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\amdlog" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 
 if "!GPU!"=="INTEL" (
@@ -542,7 +557,7 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wsearch" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" (
         taskkill /f /im "SearchUI.exe"
-        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" 
+        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy"
     ) >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" (
         taskkill /f /im "SearchApp.exe"
@@ -755,18 +770,6 @@ call:POWERSHELL "Get-PnpDevice | Where-Object { $_.InstanceId -like 'ACPI\PNP010
 echo Disabling synthetic timer
 bcdedit /set useplatformtick Yes >nul 2>&1
 
-if "!POWER_SAVING!"=="OFF" (
-    echo Disabling storage power savings
-    for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t REG_DWORD /d "0" /f >nul 2>&1
-    for %%i in (EnableHIPM EnableDIPM EnableHDDParking) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "%%i" ^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
-    for %%i in (iaStorAC iaStorA iaStorAV) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a\Parameters" /v "EnableAPM" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Disabling USB power savings
-    for %%i in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended
-        SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled
-        D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
-)
-
 call:MSGBOX "Install Timer Resolution Service ?\n\nChange your Windows timer resolution to 0.5ms to improve performance and responsiveness for games and peripherals." vbYesNo+vbQuestion "Timer Resolution"
 if !ERRORLEVEL! equ 6 (
     if "!VC!"=="NOT_INSTALLED" call:CHOCO vcredist-all
@@ -903,7 +906,7 @@ call:NIC_SETTINGS "*PriorityVLANTag" "0"
 call:NIC_SETTINGS "*RSS" "1"
 call:NIC_SETTINGS "*RSSProfile" "3"
 call:NIC_SETTINGS "*RssBaseProcNumber" "1"
-if !CORES! gtr 5 (
+if !CORES! gtr 6 (
     call:NIC_SETTINGS "*IPChecksumOffloadIPv4" "0"
     call:NIC_SETTINGS "*TCPChecksumOffloadIPv4" "0"
     call:NIC_SETTINGS "*TCPChecksumOffloadIPv6" "0"
@@ -947,107 +950,167 @@ if "!NIC_TYPE!"=="WIFI" (
     )
 )
 
-call:MSGBOX "Would you like to disable system telemetry ?" vbYesNo+vbQuestion "Privacy"
-if !ERRORLEVEL! equ 6 (
-    echo Disabling Privacy Settings Experience at Sign-in
+call "modules\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable Storage Sense;Disable WiFi Sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable application compatability telemetry;Disable license telemetry;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Windows Customer Experience Improvement Program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
+findstr /c:"Disable privacy settings experience at sign-in" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling privacy settings experience at sign-in
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OOBE" /v "DisablePrivacyExperience" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Disabling App Launch Tracking
+)
+findstr /c:"Disable app launch tracking" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disable app launch tracking
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackProgs" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Change Windows feedback to Never
+)
+findstr /c:"Disabling Windows feedback" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disable Windows feedback
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Siuf\Rules" /v "NumberOfSIUFInPeriod" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Siuf\Rules" /v "PeriodInNanoSeconds" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Turn off Pen feedback
+)
+findstr /c:"Disable pen feedback" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling pen feedback
     reg add "HKLM\SOFTWARE\Policies\Microsoft\TabletPC" /v "TurnOffPenFeedback" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Disabling PenWorkspace Ads
+)
+findstr /c:"Disable PenWorkspace ads" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling PenWorkspace ads
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\PenWorkspace" /v "PenWorkspaceAppSuggestionsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Disabling Bluetooth ads
+)
+findstr /c:"Disable bluetooth ads" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling bluetooth ads
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Bluetooth" /v "AllowAdvertising" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Do not offer tailored experiences based on the diagnostic data setting
+)
+findstr /c:"Disable tailored experiences with diagnostic data" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling tailored experiences with diagnostic data
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Do not let apps on other devices open and message apps on this device
+)
+findstr /c:"Disable shared experiences" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling shared experiences
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v "RomeSdkChannelUserAuthzPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Disabling apps suggestions, tips, welcome experience
-    for %%i in (ContentDeliveryAllowed OemPreInstalledAppsEnabled PreInstalledAppsEnabled PreInstalledAppsEverEnabled SilentInstalledAppsEnabled
-        RotatingLockScreenEnabled RotatingLockScreenOverlayEnabled SystemPaneSuggestionsEnabled SoftLandingEnabled FeatureManagementEnabled
-        SubscribedContent-310093Enabled SubscribedContent-314559Enabled SubscribedContent-338387Enabled SubscribedContent-338388Enabled SubscribedContent-338389Enabled
-        SubscribedContent-338393Enabled SubscribedContent-353694Enabled SubscribedContent-353696Enabled SubscribedContent-353698Enabled) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableSoftLanding" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+findstr /c:"Disable Windows Spotlight" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Windows Spotlight
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsSpotlightFeatures" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+findstr /c:"Disable automatic apps installation" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling automatic apps installation
+    for %%i in (ContentDeliveryAllowed OemPreInstalledAppsEnabled PreInstalledAppsEnabled PreInstalledAppsEverEnabled SilentInstalledAppsEnabled) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
+)
+findstr /c:"Disable welcome exeriences" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling welcome exeriences
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-310093Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+)
+findstr /c:"Disable tips, tricks and suggestions" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling tips, tricks and suggestions
+    for %%i in (SubscribedContent-314559Enabled SubscribedContent-338387Enabled SubscribedContent-338388Enabled SubscribedContent-338389Enabled
+        SubscribedContent-338393Enabled SubscribedContent-353694Enabled SubscribedContent-353696Enabled SubscribedContent-314563Enabled
+        SubscribedContent-353698Enabled SystemPaneSuggestionsEnabled SoftLandingEnabled FeatureManagementEnabled) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableSoftLanding" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Do not suggest ways I can finish setting up my device to get the most out of Windows
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v "ScoobeSystemSettingEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Removing Metadata Tracking
+)
+findstr /c:"Disable metadata tracking" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Removing metadata tracking
     reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata" /f >nul 2>&1
-
+)
+findstr /c:"Disable Storage Sense" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
     echo Removing Storage Sense
     reg delete "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense" /f >nul 2>&1
-
+)
+findstr /c:"Disable WiFi Sense" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
     echo Disabling WiFi Sense
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v "AutoConnectAllowedOEM" /t REG_DWORD /d "0" /f >nul 2>&1
-
-    echo Disabling Error Reporting
+)
+findstr /c:"Disable error reporting" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling error reporting
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WerSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wercplsupport" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" /v "DoReport" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v "Disabled" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v "Disabled" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Disabling Advertising ID
+)
+findstr /c:"Disable advertising ID" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling advertising ID
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" /v "DisabledByGroupPolicy" /t REG_DWORD /d "1" /f >nul 2>&1
-
+)
+findstr /c:"Disable data collection" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
     echo Disabling data collection
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowTelemetry" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "LimitEnhancedDiagnosticDataWindowsAnalytics" /t REG_DWORD /d "0" /f >nul 2>&1
-
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\diagnosticshub.standardcollector.service" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+)
+findstr /c:"Disable application compatability telemetry" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
     echo Disabling application compatability telemetry
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "AITEnable" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "DisableInventory" /t REG_DWORD /d "1" /f >nul 2>&1
-
+)
+findstr /c:"Disable license telemetry" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
     echo Disabling license telemetry
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "NoGenTicket" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "AllowWindowsEntitlementReactivation" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Disabling inking and typing telemetry
+)
+findstr /c:"Disable inking and typing data collection" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling inking and typing data collection
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Input\TIPC" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Personalization\Settings" /v "AcceptedPrivacyPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\TabletPC" /v "PreventHandwritingDataSharing" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\HandwritingErrorReports" /v "PreventHandwritingErrorReports" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Disabling Windows Defender telemetry
+)
+findstr /c:"Disable Windows Defender reporting" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Windows Defender reporting
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting" /v "DisableGenericRePorts" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v "LocalSettingOverrideSpynetReporting" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v "SpynetReporting" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v "SubmitSamplesConsent" /t REG_DWORD /d "2" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\MRT" /v "DontReportInfectionInformation" /t REG_DWORD /d "1" /f >nul 2>&1
-
-    echo Disabling Timeline telemetry
+)
+findstr /c:"Disable timeline activity history" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling timeline activity history
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "PublishUserActivities" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "UploadUserActivities" /t REG_DWORD /d "0" /f >nul 2>&1
-
+)
+findstr /c:"Disable Windows Customer Experience Improvement Program" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Customer Experience Improvement Program
     reg add "HKLM\SOFTWARE\Policies\Microsoft\SQMClient\Windows" /v "CEIPEnable" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\SQMClient" /v "CorporateSQMURL" /t REG_SZ /d "0.0.0.0" /f >nul 2>&1
-
-    echo Disabling AutoLogger
+)
+findstr /c:"Disable autoLogger" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling autoLogger
     for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\WMI\AutoLogger" /s /f "start"^| findstr "HKEY"') do reg add "%%i" /v "Start" /t REG_DWORD /d "0" /f >nul 2>&1
-
+)
+findstr /c:"Disable unnecessary scheduled tasks" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
     echo Disabling unnecessary scheduled tasks
     for %%i in ("Application Experience\Microsoft Compatibility Appraiser" "Application Experience\ProgramDataUpdater"
         "Application Experience\StartupAppTask" "Customer Experience Improvement Program\Consolidator"
@@ -1055,6 +1118,7 @@ if !ERRORLEVEL! equ 6 (
         "Customer Experience Improvement Program\Uploader" "Autochk\Proxy" "CloudExperienceHost\CreateObjectTask"
         "DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" "DiskFootprint\Diagnostics") do schtasks /change /tn "\Microsoft\Windows\%%~i" /disable >nul 2>&1
 )
+del /f /q "%TMP%\privacy.txt" >nul 2>&1
 
 echo Disabling Cortana from taskbar
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -1123,31 +1187,7 @@ reg add "HKU\!USER_SID!\Control Panel\Accessibility" /v "DynamicScrollbars" /t R
 echo Disabling user tracking (recent run)
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInstrumentation" /d "1" /t REG_DWORD /f >nul 2>&1
 
-echo Disabling Explorer animations
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "TurnOffSPIAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
-
-echo Disabling Timeline
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "EnableActivityFeed" /t REG_DWORD /d "0" /f >nul 2>&1
-
-echo Visual optimization
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d "3" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "UserPreferencesMask" /t REG_BINARY /d "9012038010000000" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "FontSmoothing" /t REG_SZ /d "2" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "DragFullWindows" /t REG_SZ /d "1" /f >nul 2>&1
-reg add "HKU\!USER_SID!\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "IconsOnly" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewAlphaSelect" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewShadow" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarAnimations" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "SnapAssist" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "DisallowShaking" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "EnableAeroPeek" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "AlwaysHibernateThumbnails" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DWM" /v "DisallowAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
-
-call "modules\choicebox.exe" "Remove 3D Objects from File Explorer;Remove Library from File Explorer;Remove Favorites from File Explorer;Remove Family Group from File Explorer;Remove Network from File Explorer;Remove OneDrive from File Explorer;Remove Quick Access from File Explorer;Remove All Folders in 'This PC' from File Explorer;Hide Search Box from Taskbar;Hide Task View from Taskbar;Hide People from Taskbar;Hide Windows Ink Workspace from Taskbar;Hide Meet Now from Taskbar;Hide News and Interests from Taskbar;Hide Windows Defender from Taskbar;Enable Small Icons in Taskbar;Show All Tray Icons on Taskbar;Show Seconds on Taskbar Clock;Hide Recently Added Apps in Start Menu;Hide Most Used Apps in Start Menu;Unpin all Start Menu tiles;Increase Taskbar Transparency Level;Disable Transparency Effect Theme;Enable Dark Mode Theme;Set Desktop Background to Solid Color;Disable Lock Screen;Reduce Size of Buttons Close Minimize Maximize;Disable Delete Confirmation Box for Recycle Bin;Show File Extensions;Show Hidden Folders;Disable Shortcut Name Extension;Add Take Ownership to Context Menu;Add Classic Personalize Context Menu;Restore Classic Windows Photo Viewer;Enable Classic Volume Control;Enable Classic Alt Tab;Enable Windows 8 Network Flayout;Disable Boot Graphics;Enable F8 Boot Menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
+call "modules\choicebox.exe" "Remove 3D Objects from File Explorer;Remove Library from File Explorer;Remove Favorites from File Explorer;Remove Family Group from File Explorer;Remove Network from File Explorer;Remove OneDrive from File Explorer;Remove Quick Access from File Explorer;Remove All Folders in 'This PC' from File Explorer;Hide Search Box from Taskbar;Hide Task View from Taskbar;Hide People from Taskbar;Hide Windows Ink Workspace from Taskbar;Hide Meet Now from Taskbar;Hide News and Interests from Taskbar;Hide Windows Defender from Taskbar;Enable Small Icons in Taskbar;Show All Tray Icons on Taskbar;Show Seconds on Taskbar Clock;Hide Recently Added Apps in Start Menu;Hide Most Used Apps in Start Menu;Unpin all Start Menu tiles;Increase Taskbar Transparency Level;Disable Transparency Effect Theme;Enable Dark Mode Theme;Set Desktop Background to Solid Color;Remove mouse scheme;Adjust visual effects to best performance;Disable Lock Screen;Reduce Size of Buttons Close Minimize Maximize;Disable Delete Confirmation Box for Recycle Bin;Show File Extensions;Show Hidden Folders;Disable Shortcut Name Extension;Add Take Ownership to Context Menu;Add Classic Personalize Context Menu;Restore Classic Windows Photo Viewer;Enable Classic Volume Control;Enable Classic Alt Tab;Enable Windows 8 Network Flayout;Disable Boot Graphics;Enable F8 Boot Menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
 findstr /c:"Remove 3D Objects from File Explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Removing 3D Objects from File Explorer
@@ -1294,6 +1334,44 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" /v "BackgroundType" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "Wallpaper" /t REG_SZ /d "" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Colors" /v "Background" /t REG_SZ /d "9 17 26" /f >nul 2>&1
+)
+findstr /c:"Disable Timeline" "%TMP%\interface.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Timeline
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "EnableActivityFeed" /t REG_DWORD /d "0" /f >nul 2>&1
+)
+findstr /c:"Remove mouse scheme" "%TMP%\interface.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Removing mouse scheme
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /ve /t REG_SZ /d "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "ContactVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "GestureVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "CursorBaseSize" /t REG_DWORD /d "32" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "Scheme Source" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "Crosshair" /t REG_SZ /d "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "IBeam" /t REG_SZ /d "" /f >nul 2>&1
+    for %%i in (AppStarting Arrow Hand Help No NWPen SizeAll SizeNESW SizeNS SizeNWSE SizeWE UpArrow Wait Person Pin) do reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "%%i" /t REG_SZ /d "" /f >nul 2>&1
+)
+findstr /c:"Adjust visual effects to best performance" "%TMP%\interface.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Setting Visual effects to performance
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d "3" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "UserPreferencesMask" /t REG_BINARY /d "9012038010000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "FontSmoothing" /t REG_SZ /d "2" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "DragFullWindows" /t REG_SZ /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "IconsOnly" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewAlphaSelect" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewShadow" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarAnimations" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "SnapAssist" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "DisallowShaking" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "EnableAeroPeek" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "AlwaysHibernateThumbnails" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DWM" /v "DisallowAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "TurnOffSPIAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable Lock Screen" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1643,7 +1721,7 @@ echo              !S_GREEN!28 !Notepad++!                             !S_GREEN!3
 echo              !S_GREEN!29 !FileZilla!                             !S_GREEN!37 !Epic Games!                            !S_GREEN!43 !VMware Workstation Player!
 echo              !S_GREEN!30 !WinSCP!                                !S_GREEN!38 !Uplay!                                 !S_GREEN!44 !TeamViewer!
 echo              !S_GREEN!31 !PuTTY!                                 !S_GREEN!39 !Battle.net!                            !S_GREEN!45 !AnyDesk!
-echo              !S_GREEN!32 !Python 3!                                !S_GREEN!40 !Origin!                                !S_GREEN!46 !qBittorrent!
+echo              !S_GREEN!32 !Python 3!                              !S_GREEN!40 !Origin!                                !S_GREEN!46 !qBittorrent!
 echo              !S_GREEN!33 !Java Runtime Environment 8!                                                         !S_GREEN!47 !Bulk Crap Uninstaller!
 echo              !S_GREEN!34 !Node.JS!                                                                            !S_GREEN!48 !Everything!
 echo                                                                                                        !S_GREEN!49 !MSI Afterburner!
