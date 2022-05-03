@@ -235,9 +235,6 @@ if !ERRORLEVEL! equ 0 (
 )
 del /f /q "%TMP%\security.txt" >nul 2>&1
 
-echo Disabling Intel TSX to prevent Zombieload v2 attacks
-reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "DisableTsx" /t REG_DWORD /d "1" /f >nul 2>&1
-
 echo Disabling Windows auto update
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoUpdate" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "AUOptions" /t REG_DWORD /d "2" /f >nul 2>&1
@@ -258,12 +255,6 @@ reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Autop
 
 echo Disabling Downloads blocking
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Attachments" /v "SaveZoneInformation" /t REG_DWORD /d "1" /f >nul 2>&1
-
-echo Disabling SigninInfo
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\UserARSO\!USER_SID!" /v "OptOut" /t REG_DWORD /d "1" /f >nul 2>&1
-
-echo Disabling Caching of logon credentials
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v "CachedLogonsCount" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo Speed up start time
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "DelayedDesktopSwitchTimeout" /t REG_DWORD /d "0" /f >nul 2>&1
