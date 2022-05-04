@@ -2150,7 +2150,7 @@ REM Check Computer type
 for /f "delims=:{}" %%i in ('wmic path Win32_systemenclosure get ChassisTypes^| findstr [0-9]') do set "CHASSIS=%%i"
 for %%i in (8 9 10 11 12 14 18 21 13 31 32 30) do if "!CHASSIS!"=="%%i" set "PC_TYPE=LAPTOP/TABLET"
 REM Check SSD
-for /f %%i in ('call "modules\smartctl.exe" --scan') do call "modules\smartctl.exe" %%i -a^| findstr /i "Rotation Rate:"^| findstr /i "Solid SSD RAID SandForce" >nul 2>&1 && set "STORAGE_TYPE=SSD"
+call "modules\smartctl.exe" %systemdrive% -i | findstr /i "Rotation Rate:" | findstr /i "Solid SSD RAID SandForce" >nul 2>&1 && set "STORAGE_TYPE=SSD"
 REM Check GPU
 wmic path Win32_VideoController get Name | findstr "NVIDIA" >nul 2>&1 && set "GPU=NVIDIA"
 wmic path Win32_VideoController get Name | findstr "AMD ATI" >nul 2>&1 && set "GPU=AMD"
