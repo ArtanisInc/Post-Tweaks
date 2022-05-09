@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.1.6"
-set "VERSION_INFO=03/05/2022"
+set "VERSION=2.1.7"
+set "VERSION_INFO=10/05/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -207,9 +207,9 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable Meltdown/Spectre" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Meltdown/Spectre and removing microcode update
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
     del /f /q "%WinDir%\System32\mcupdate_GenuineIntel.dll" >nul 2>&1
     del /f /q "%WinDir%\System32\mcupdate_AuthenticAMD.dll" >nul 2>&1
 )
@@ -226,21 +226,10 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable SEHOP" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling SEHOP
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "KernelSEHOPEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "DisableExceptionChainValidation" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "KernelSEHOPEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "DisableExceptionChainValidation" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 del /f /q "%TMP%\security.txt" >nul 2>&1
-
-echo Disabling Autoplay and Autorun
-reg add "HKLM\SOFTWARE\Microsoft\Internet Explorer\Main" /v "Autorun" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutorun" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoplayfornonVolume" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "DontSetAutoplayCheckbox" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d "1" /f >nul 2>&1
-
-echo Disabling Downloads blocking
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Attachments" /v "SaveZoneInformation" /t REG_DWORD /d "1" /f >nul 2>&1
 
 echo Speed up start time
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "DelayedDesktopSwitchTimeout" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -267,7 +256,7 @@ reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >nul 2>&1
 
 echo Disabling fast startup
-reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Power" /v "HiberbootEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v "HiberbootEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo Importing Power Plan
 powercfg -delete 11111111-1111-1111-1111-111111111111 >nul 2>&1
@@ -350,22 +339,22 @@ echo Increasing file system memory cache size
 fsutil behavior set mftzone 2 >nul 2>&1
 
 echo Disabling random drivers verification
-reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\memory management" /v "DontVerifyRandomDrivers" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management" /v "DontVerifyRandomDrivers" /t REG_DWORD /d "1" /f >nul 2>&1
 
 echo Disallow drivers to get paged into virtual memory
-reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\memory management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >nul 2>&1
 
 echo Disabling Windows attempt to save as much RAM as possible
-reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\Memory Management" /v "DisablePagingCombining" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingCombining" /t REG_DWORD /d "1" /f >nul 2>&1
 
-if !CORES! gtr 6 echo Enabling DistributeTimers & reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "DistributeTimers" /t REG_DWORD /d "1" /f >nul 2>&1
+if !CORES! gtr 6 echo Enabling DistributeTimers & reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "DistributeTimers" /t REG_DWORD /d "1" /f >nul 2>&1
 
 if "!STORAGE_TYPE!"=="SSD" (
     echo Applying SSD Tweaks
     fsutil behavior set disabledeletenotify 0 >nul 2>&1
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\memory management\prefetchparameters" /v "EnableBoottrace" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\memory management\prefetchparameters" /v "EnablePrefetcher" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\memory management\prefetchparameters" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management\prefetchparameters" /v "EnableBoottrace" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management\prefetchparameters" /v "EnablePrefetcher" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management\prefetchparameters" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" /v "Enable" /t REG_SZ /d "N" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OptimalLayout" /v "EnableAutoLayout" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\SysMain" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
@@ -536,18 +525,18 @@ if "!GPU!"=="INTEL" (
     ) >nul 2>&1
 )
 
-call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Microsoft Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Files and Printers share support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable Remote support;Disable VPN support;Disable Bitlocker support;Disable IPv6 support;Disable QoS support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
+call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Microsoft Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable VPN support;Disable Bitlocker support;Disable IPv6 support;Disable QoS support;Disable Files and Printers share support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
 findstr /c:"Disable Windows Search" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Search
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wsearch" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" (
         taskkill /f /im "SearchUI.exe"
-        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy"
+        move "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy.backup"
     ) >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" (
         taskkill /f /im "SearchApp.exe"
-        rd /s /q "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy"
+        move "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy.backup"
     ) >nul 2>&1
 )
 findstr /c:"Disable OneDrive" "%TMP%\services.txt" >nul 2>&1
@@ -666,12 +655,6 @@ if !ERRORLEVEL! equ 0 (
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
-findstr /c:"Disable Files and Printers share support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Files and Printers share support
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-)
 findstr /c:"Disable Hyper-V support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Hyper-V support
@@ -705,16 +688,6 @@ if !ERRORLEVEL! equ 0 (
     echo Disabling Webcam and Scanner support
     reg add "HKLM\SYSTEM\CurrentControlSet\services\stisvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable Remote support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Remote support
-    for %%i in (RasAuto RasMan SessionEnv TermService UmRdpService RpcLocator RemoteAccess RemoteRegistry) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >nul 2>&1
-)
 findstr /c:"Disable VPN support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling VPN support
@@ -733,15 +706,23 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable IPv6 support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling IPv6
+    echo Disabling IPv6 support
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip6"
 )
 findstr /c:"Disable QoS support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling QoS
+    echo Disabling QoS support
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Psched" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_pacer"
+)
+findstr /c:"Disable Files and Printers share support" "%TMP%\services.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Files and Printers share support
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    call:POWERSHELL "Disable-NetAdapterBinding -Name \"*\" -ComponentID ms_server"
+    call:POWERSHELL "Disable-NetAdapterBinding -Name \"*\" -ComponentID ms_msclient"
 )
 del /f /q "%TMP%\services.txt" >nul 2>&1
 
@@ -913,6 +894,8 @@ call:NIC_SETTINGS "*PriorityVLANTag" "0"
 call:NIC_SETTINGS "*RSS" "1"
 call:NIC_SETTINGS "*RSSProfile" "3"
 call:NIC_SETTINGS "*RssBaseProcNumber" "1"
+call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$MaxNumRssQueues = [int](($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues').ValidRegistryValues | Measure-Object -Maximum).Maximum;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues' -RegistryValue $MaxNumRssQueues}"
+call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$iReceiveBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers').NumericParameterMaxValue;$iTransmitBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers').NumericParameterMaxValue;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers' -RegistryValue $iReceiveBuffers;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers' -RegistryValue $iTransmitBuffers}"
 if !CORES! gtr 6 (
     call:NIC_SETTINGS "*IPChecksumOffloadIPv4" "0"
     call:NIC_SETTINGS "*TCPChecksumOffloadIPv4" "0"
@@ -923,8 +906,6 @@ if !CORES! gtr 6 (
 )
 call:NIC_SETTINGS "AlternateSemaphoreDelay" "0"
 call:NIC_SETTINGS "TxIntDelay" "1"
-call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter | Where-Object {$_.Status -eq 'Up'};foreach ($NetAdapter in $NetAdapters) {$MaxNumRssQueues = [int](($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues').ValidRegistryValues | Measure-Object -Maximum).Maximum;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues' -RegistryValue $MaxNumRssQueues}"
-call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter | Where-Object {$_.Status -eq 'Up'};foreach ($NetAdapter in $NetAdapters) {$iReceiveBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers').NumericParameterMaxValue;$iTransmitBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers').NumericParameterMaxValue;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers' -RegistryValue $iReceiveBuffers;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers' -RegistryValue $iTransmitBuffers}"
 call:NIC_SETTINGS "WirelessMode" "34"
 call:NIC_SETTINGS "CtsToItself" "1"
 call:NIC_SETTINGS "FatChannelIntolerant" "0"
