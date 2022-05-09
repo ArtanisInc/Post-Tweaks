@@ -148,7 +148,7 @@ if "!PC_TYPE!"=="LAPTOP/TABLET" (
     if !ERRORLEVEL! equ 6 set "POWER_SAVING=OFF"
 ) else set "POWER_SAVING=OFF"
 
-call "modules\choicebox.exe" "Disable User Access Control (UAC);Disable SmartScreen;Disable Windows Defender;Disable Windows Firewall;Disable Data Execution Prevention (DEP);Disable DMA remapping;Disable Fault Tolerant Heap (FTH);Disable Meltdown/Spectre;Disable CFG Lock;Disable ASLR;Disable SEHOP;Disable System Mitigations" "Security features can have a negative effect on performance. Use at your own risk." "Security" /C:2 >"%TMP%\security.txt"
+call "modules\choicebox.exe" "Disable User Access Control (UAC);Disable SmartScreen;Disable Windows Defender;Disable Windows Firewall;Disable Data Execution Prevention (DEP);Disable DMA remapping;Disable Fault Tolerant Heap (FTH);Disable Meltdown/Spectre;Disable CFG Lock;Disable ASLR;Disable SEHOP" "Security features can have a negative effect on performance. Use at your own risk." "Security" /C:2 >"%TMP%\security.txt"
 findstr /c:"Disable User Access Control (UAC)" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling UAC
@@ -229,23 +229,7 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "KernelSEHOPEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "DisableExceptionChainValidation" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable Process Mitigations" "%TMP%\security.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Process Mitigations
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "222222222222222222222222222222222222222222222222" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\currentcontrolset\control\session manager\kernel" /v "MitigationAuditOptions" /t REG_BINARY /d "222222222222222222222222222222222222222222222222" /f >nul 2>&1
-)
 del /f /q "%TMP%\security.txt" >nul 2>&1
-
-echo Disabling Windows auto update
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoUpdate" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "AUOptions" /t REG_DWORD /d "2" /f >nul 2>&1
-
-echo Disabling Windows update auto restart
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoRebootWithLoggedOnUsers" /t REG_DWORD /d "1" /f >nul 2>&1
-
-echo Preventing Malicious SOFTWARE removal tool from installing
-reg add "HKLM\SOFTWARE\Policies\Microsoft\MRT" /v "DontOfferThroughWUAU" /t REG_DWORD /d "1" /f >nul 2>&1
 
 echo Disabling Autoplay and Autorun
 reg add "HKLM\SOFTWARE\Microsoft\Internet Explorer\Main" /v "Autorun" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -653,11 +637,11 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable Windows Update" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Update
-    for %%i in (wuauserv WaaSMedicSvc PeerDistSvc UsoSvc) do (
+    for %%i in (wuauserv WaaSMedicSvc PeerDistSvc UsoSvc BITS CryptSvc) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
-)
+) else set "WIN_UPDATE=ENABLED"
 findstr /c:"Disable Wi-Fi support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Wi-Fi support
@@ -760,6 +744,27 @@ if !ERRORLEVEL! equ 0 (
     call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_pacer"
 )
 del /f /q "%TMP%\services.txt" >nul 2>&1
+
+if "!WIN_UPDATE!"=="ENABLED" (
+    call "modules\choicebox.exe" "Disable Windows auto update;Disable Windows update auto restart;Prevent malicious software removal tool from installing" "Here you can configure Windows Update" "Windows Update" /C:1 >"%TMP%\update.txt"
+    findstr /c:"Disable Windows auto update" "%TMP%\security.txt" >nul 2>&1
+    if !ERRORLEVEL! equ 0 (
+        echo Disabling Windows auto update
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoUpdate" /t REG_DWORD /d "1" /f >nul 2>&1
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "AUOptions" /t REG_DWORD /d "2" /f >nul 2>&1
+    )
+    findstr /c:"Disable Windows update auto restart" "%TMP%\security.txt" >nul 2>&1
+    if !ERRORLEVEL! equ 0 (
+        echo Disabling Windows update auto restart
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoRebootWithLoggedOnUsers" /t REG_DWORD /d "1" /f >nul 2>&1
+    )
+    findstr /c:"Prevent malicious software removal tool from installing" "%TMP%\security.txt" >nul 2>&1
+    if !ERRORLEVEL! equ 0 (
+        echo Preventing malicious software removal tool from installing
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\MRT" /v "DontOfferThroughWUAU" /t REG_DWORD /d "1" /f >nul 2>&1
+    )
+    del /f /q "%TMP%\update.txt" >nul 2>&1
+)
 
 echo Cleanning non-present devices
 call:POWERSHEll "$Devices = Get-PnpDevice | ? Status -eq Unknown;foreach ($Device in $Devices) { &\"pnputil\" /remove-device $Device.InstanceId }"
