@@ -957,7 +957,7 @@ if "!NIC_TYPE!"=="WIFI" (
     )
 )
 
-call "modules\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable Storage Sense;Disable WiFi Sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable application compatability telemetry;Disable license telemetry;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Windows Customer Experience Improvement Program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
+call "modules\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable Storage Sense;Disable WiFi Sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable Windows Keylogger;Disable application compatability telemetry;Disable license telemetry;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Windows Customer Experience Improvement Program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
 findstr /c:"Disable privacy settings experience at sign-in" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling privacy settings experience at sign-in
@@ -1068,6 +1068,11 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\diagnosticshub.standardcollector.service" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
+findstr /c:"Disable Windows Keylogger" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Windows Keylogger
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+)
 findstr /c:"Disable application compatability telemetry" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling application compatability telemetry
@@ -1126,6 +1131,87 @@ if !ERRORLEVEL! equ 0 (
         "DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" "DiskFootprint\Diagnostics") do schtasks /change /tn "\Microsoft\Windows\%%~i" /disable >nul 2>&1
 )
 del /f /q "%TMP%\privacy.txt" >nul 2>&1
+
+call "modules\choicebox.exe" "Disable Autoplay and Autorun;Disable NetBIOS;Disable Remote Assistance;Disable Remote Access;Disable LLMNR;Disable Windows Browser Protocol;Disable WPAD;Disable WDigest;Disable Windows Scripting Host;Disable SMBv1;Disable Null Sessions;Block Untrusted Fonts" "Here you can secure your system against threats" "Hardenning" /C:2 >"%TMP%\hardenning.txt"
+findstr /c:"Disable Autoplay and Autorun" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Autoplay and Autorun
+    reg add "HKLM\SOFTWARE\Microsoft\Internet Explorer\Main" /v "Autorun" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutorun" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoplayfornonVolume" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "DontSetAutoplayCheckbox" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+findstr /c:"Disable NetBIOS" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling NetBIOS
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\NetBT" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\NetBIOS" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\lmhosts" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces" /s /f "NetbiosOptions"^| findstr "HKEY"') do reg add "%%i" /v "NetbiosOptions" /t REG_DWORD /d "2" /f >nul 2>&1
+)
+findstr /c:"Disable Remote Assistance" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Remote Assistance
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >nul 2>&1
+)
+findstr /c:"Disable Remote Access" "%TMP%\services.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Remote Access
+    for %%i in (RasAuto RasMan SessionEnv TermService UmRdpService RpcLocator) do (
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
+        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
+    ) >nul 2>&1
+)
+findstr /c:"Disable LLMNR" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling LLMNR
+    reg add "HKLM\SOFTWARE\policies\Microsoft\Windows NT\DNSClient" /v "EnableMulticast" /t REG_DWORD /d "0" /f >nul 2>&1
+)
+findstr /c:"Disable Windows Browser Protocol" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Windows Browser Protocol
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Browser" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+)
+findstr /c:"Disable WPAD" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling WPAD
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad" /v "WpadOverride" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+findstr /c:"Disable WDigest" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling WDigest
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\Wdigest" /v "UseLogonCredential" /t REG_DWORD /d "0" /f >nul 2>&1
+)
+findstr /c:"Disable Windows Scripting Host" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Windows Scripting Host
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "RunScript" /t REG_SZ /d "%SystemRoot%\System32\cmd.exe /c reg add \"HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings\" /v \"Enabled\" /t REG_DWORD /d \"0\" /f" /f >nul 2>&1
+)
+findstr /c:"Disable SMBv1" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling SMBv1
+    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol"
+    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Client"
+    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Server"
+)
+findstr /c:"Disable Null Sessions" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Null Sessions
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RestrictAnonymous" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RestrictAnonymousSAM" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "EveryoneIncludesAnonymous" /t REG_DWORD /d "0" /f >nul 2>&1
+)
+findstr /c:"Block Untrusted Fonts" "%TMP%\hardenning.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Blocking Untrusted Fonts
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_QWORD /d "1000000000000" /f >nul 2>&1
+)
+del /f /q "%TMP%\hardenning.txt" >nul 2>&1
 
 echo Disabling Cortana from taskbar
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -2142,7 +2228,7 @@ call:MSGBOX "Revision community - Learned a lot about PC Tweaking\nTheBATeam com
 goto MAIN_MENU
 
 :HELP
-call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essentials programs in the background.\n\nOptions:\n\n1) SYSTEM TWEAKS\n   ● Remove unnecessary Microsoft apps\n   ● Disable unnecessary services\n   ● Disable power saving features\n   ● Disable telemetry\n   ● Optimize drivers\n   ● Optimize network\n   ● Personalize Windows\n\n2) SOFTWARE INSTALLER\nDisplay a selection menu that let you downloads and installs essentials programs automatically in the background.\n\n3) TOOLS\nDisplay a selection menu that let you downloads useful tools." vbInformation "Help"
+call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essentials programs in the background.\n\nOptions:\n\n1) SYSTEM TWEAKS\n   ● Remove unnecessary Microsoft apps\n   ● Disable unnecessary services\n   ● Disable power saving features\n   ● Disable telemetry\n   ● Optimize drivers\n   ● Optimize network\n   ● Harden Windows\n   ● Personalize Windows\n\n2) SOFTWARE INSTALLER\nDisplay a selection menu that let you downloads and installs essentials programs automatically in the background.\n\n3) TOOLS\nDisplay a selection menu that let you downloads useful tools." vbInformation "Help"
 goto MAIN_MENU
 
 REM =====================================================
