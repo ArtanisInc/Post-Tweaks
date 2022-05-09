@@ -139,7 +139,9 @@ reg add "HKU\!USER_SID!\Environment" /v "TEMP" /t REG_SZ /d "%USERPROFILE%\AppDa
 
 echo Disabling Windows settings synchronization
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync" /v "SyncPolicy" /t REG_DWORD /d "5" /f >nul 2>&1
-for %%i in (Accessibility AppSync BrowserSettings Credentials DesktopTheme Language PackageState Personalization StartLayout Windows) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\%%i" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSettingSync" /t REG_DWORD /d "2" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSettingSyncUserOverride" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSyncOnPaidNetwork" /t REG_DWORD /d "1" /f >nul 2>&1
 
 if "!PC_TYPE!"=="LAPTOP/TABLET" (
     call:MSGBOX "Would you like to disable power saving features ?\n\nDisabling power saving will decrease battery life, but performance will be improved." vbYesNo+vbQuestion "Power saving"
