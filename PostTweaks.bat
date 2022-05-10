@@ -1374,16 +1374,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Unpin all Start Menu tiles" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Unpinning all Start Menu tiles
-    echo ^<LayoutModificationTemplate Version="1" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification" xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" xmlns:taskbar="http://schemas.microsoft.com/Start/2014/TaskbarLayout"^> >"%TMP%\StartLayout.xml"
-    echo ^<LayoutOptions StartTileGroupCellWidth="6" /^> >>"%TMP%\StartLayout.xml"
-    echo ^<DefaultLayoutOverride^> >>"%TMP%\StartLayout.xml"
-    echo    ^<StartLayoutCollection^> >>"%TMP%\StartLayout.xml"
-    echo        ^<defaultlayout:StartLayout GroupCellWidth="6" xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout"^> >>"%TMP%\StartLayout.xml"
-    echo        ^</defaultlayout:StartLayout^> >>"%TMP%\StartLayout.xml"
-    echo    ^</StartLayoutCollection^> >>"%TMP%\StartLayout.xml"
-    echo ^</DefaultLayoutOverride^> >>"%TMP%\StartLayout.xml"
-    echo ^</LayoutModificationTemplate^> >>"%TMP%\StartLayout.xml"
-    call:POWERSHELL "import-startlayout -layoutpath $Env:TMP\StartLayout.xml -mountpath $Env:USERPROFILE"
+    for /f "tokens=*" %%i in ('reg query "HKU\!USER_SID!\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\Cache\DefaultAccount" /s /f "start.tilegrid"^| findstr "start.tilegrid"') do reg delete "%%i" /f >nul 2>&1
 )
 findstr /c:"Increase Taskbar Transparency Level" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
