@@ -1140,7 +1140,7 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable Remote Access" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable Remote Access" "%TMP%\hardenning.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Remote Access
     for %%i in (RasAuto RasMan SessionEnv TermService UmRdpService RpcLocator) do (
@@ -1180,7 +1180,7 @@ if !ERRORLEVEL! equ 0 (
     call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Client"
     call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Server"
 )
-findstr /c:"Disable Null Sessions" >nul 2>&1
+findstr /c:"Disable Null Sessions" "%TMP%\hardenning.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Null Sessions
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RestrictAnonymous" /t REG_DWORD /d "1" /f >nul 2>&1
