@@ -5,7 +5,7 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.2.0"
+set "VERSION=2.2.0a"
 set "VERSION_INFO=14/05/2022"
 
 call:SETCONSTANTS >nul 2>&1
@@ -217,7 +217,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable All System Mitigations" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Process Mitigations
-    powershell -NoProfile -Command Set-ProcessMitigation -System -Disable CFG
+    call:POWERSHELL "Set-ProcessMitigation -System -Disable CFG"
     for /f "tokens=3 skip=2" %%i in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%i
     for /l %%i in (0,1,9) do set mitigation_mask=!mitigation_mask:%%i=2!
     reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "!mitigation_mask!" /f >nul 2>&1
