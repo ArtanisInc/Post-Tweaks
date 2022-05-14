@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.1.9"
-set "VERSION_INFO=11/05/2022"
+set "VERSION=2.2.0"
+set "VERSION_INFO=14/05/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -74,7 +74,7 @@ if /i !VERSION! lss !LATEST_VERSION! (
     cls
 )
 
-set "NEEDEDFILES=modules/7z.exe modules/7z.dll modules/choicebox.exe modules/nsudo.exe modules/smartctl.exe resources/procexp.exe resources/PostTweaks.pow resources/SetTimerResolutionService.exe resources/nvidiaProfileInspector.exe resources/BaseProfile.nip"
+set "NEEDEDFILES=modules/7z.exe modules/7z.dll modules/choicebox.exe modules/nsudo.exe modules/smartctl.exe modules/install_wim_tweak.exe resources/procexp.exe resources/PostTweaks.pow resources/SetTimerResolutionService.exe resources/nvidiaProfileInspector.exe resources/BaseProfile.nip"
 for %%i in (!NEEDEDFILES!) do (
     if not exist %%i (
         set "MISSINGFILES=True"
@@ -148,7 +148,7 @@ if "!PC_TYPE!"=="LAPTOP/TABLET" (
     if !ERRORLEVEL! equ 6 set "POWER_SAVING=OFF"
 ) else set "POWER_SAVING=OFF"
 
-call "modules\choicebox.exe" "Disable User Access Control (UAC);Disable SmartScreen;Disable Windows Defender;Disable Windows Firewall;Disable Data Execution Prevention (DEP);Disable DMA remapping;Disable Fault Tolerant Heap (FTH);Disable Meltdown/Spectre;Disable CFG Lock;Disable ASLR;Disable SEHOP" "Security features can have a negative effect on performance. Use at your own risk." "Security" /C:2 >"%TMP%\security.txt"
+call "modules\choicebox.exe" "Disable User Access Control (UAC);Disable SmartScreen;Remove Windows Defender;Disable Windows Firewall;Disable automatic maintenance;Disable Data Execution Prevention (DEP);Disable DMA remapping;Disable Fault Tolerant Heap (FTH);Disable Meltdown/Spectre;Disable All System Mitigations" "Security features can have a negative effect on performance. Use at your own risk." "Security" /C:2 >"%TMP%\security.txt"
 findstr /c:"Disable User Access Control (UAC)" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling UAC
@@ -162,30 +162,31 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "SmartScreenEnabled" /t REG_SZ /d "Off" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost" /v "EnableWebContentEvaluation" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable Windows Defender" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Remove Windows Defender" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Defender
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Sense" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\WdNisSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\WinDefend" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\SamSs" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\wscsvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\SgrmBroker" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\SecurityHealthService" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" /v "DisableAntiSpyware" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SPP\Clients" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Wdboot" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\WdFilter" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\WdNisDrv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\mpsdrv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Wdnsfltr" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\mssecflt" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    echo Removing Windows Defender
+    call:WIM_TWEAK Microsoft-Windows-SecurityCenter
+    call:WIM_TWEAK Windows-Defender
+    call:WIM_TWEAK Microsoft-Windows-HVSI
+    call:WIM_TWEAK Microsoft-Windows-SecureStartup
+    call:WIM_TWEAK Microsoft-Windows-Killbits
+    call:WIM_TWEAK Microsoft-Windows-SenseClient
+    call:WIM_TWEAK Microsoft-Windows-DeviceGuard
+    call:WIM_TWEAK Microsoft-OneCore-VirtualizationBasedSecurity
+    reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "SecurityHealth" /f >nul 2>&1
 )
 findstr /c:"Disable Windows Firewall" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Firewall
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\mpssvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\BFE" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+)
+findstr /c:"Disable automatic maintenance" "%TMP%\security.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling automatic maintenance
+    reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable Data Execution Prevention (DEP)" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -213,21 +214,14 @@ if !ERRORLEVEL! equ 0 (
     del /f /q "%WinDir%\System32\mcupdate_GenuineIntel.dll" >nul 2>&1
     del /f /q "%WinDir%\System32\mcupdate_AuthenticAMD.dll" >nul 2>&1
 )
-findstr /c:"Disable CFG Lock" "%TMP%\security.txt" >nul 2>&1
+findstr /c:"Disable All System Mitigations" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling CFG Lock
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "EnableCfg" /t REG_DWORD /d "0" /f >nul 2>&1
-)
-findstr /c:"Disable ASLR" "%TMP%\security.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling ASLR
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "MoveImages" /t REG_DWORD /d "0" /f >nul 2>&1
-)
-findstr /c:"Disable SEHOP" "%TMP%\security.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling SEHOP
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "KernelSEHOPEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "DisableExceptionChainValidation" /t REG_DWORD /d "1" /f >nul 2>&1
+    echo Disabling Process Mitigations
+    powershell -NoProfile -Command Set-ProcessMitigation -System -Disable CFG
+    for /f "tokens=3 skip=2" %%i in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%i
+    for /l %%i in (0,1,9) do set mitigation_mask=!mitigation_mask:%%i=2!
+    reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "!mitigation_mask!" /f >nul 2>&1
+    reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t REG_BINARY /d "!mitigation_mask!" /f >nul 2>&1
 )
 del /f /q "%TMP%\security.txt" >nul 2>&1
 
@@ -299,6 +293,8 @@ if "!POWER_SAVING!"=="OFF" (
 echo Disabling background apps
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\bam" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\dam" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 
 echo Organize services into associated host groups
 reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /t REG_DWORD /d "!SVCHOST!" /f >nul 2>&1
@@ -311,11 +307,6 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProf
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NoLazyMode" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "LazyModeTimeout" /t REG_DWORD /d "150000" /f >nul 2>&1
-
-echo Disabling automatic maintenance
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo Disabling 8dot3 name creation for all volumes on the system
 fsutil behavior set disable8dot3 1 >nul 2>&1
@@ -360,6 +351,7 @@ if "!STORAGE_TYPE!"=="SSD/NVMe" (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\SysMain" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\FontCache" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\FontCache3.0.0.0" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\rdyboost" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 
@@ -369,7 +361,7 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Reliability" /v "TimeSta
 echo Disabling Memory compression
 call:POWERSHELL "Disable-MMAgent -mc"
 
-call:MSGBOX "Enable Fullscreen Exclusive and disable GameBar ?\n\nBy default Windows use fullscreen optimization. It overrides the fullscreen mode in games and forces it to a borderless hybrid mode which comes with high latency and lower performance." vbYesNo+vbQuestion "Fullscreen Exclusive"
+call:MSGBOX "Would you like to enable Fullscreen Exclusive and disable GameBar ?\n\nBy default Windows use fullscreen optimization. It overrides the fullscreen mode in games and forces it to a borderless hybrid mode which comes with high latency and lower performance." vbYesNo+vbQuestion "Fullscreen Exclusive"
 if !ERRORLEVEL! equ 6 (
     echo Enabling FSE and disabling GameBar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -390,39 +382,7 @@ if !ERRORLEVEL! equ 6 (
     reg delete "HKU\!USER_SID!\System\GameConfigStore\Children" /f >nul 2>&1
     reg delete "HKU\!USER_SID!\System\GameConfigStore\Parents" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" /v "ActivationType" /t REG_DWORD /d "0" /f >nul 2>&1
-)
-
-call:MSGBOX "Automatically disable Fullscreen Optimizations for Apps/Games ?\n\nBy default Windows use fullscreen optimization. It overrides the fullscreen mode in games and forces it to a borderless hybrid mode which comes with high latency and lower performance." vbYesNo+vbQuestion "Fullscreen Exclusive"
-if !ERRORLEVEL! equ 6 (
-    echo Installing GlobalAppCompatFlags event script
-    echo Dim oldflags : newflags = "~ DISABLEDXMAXIMIZEDWINDOWEDMODE" >"%WinDir%\globalflags.vbs"
-    echo Const HKU = 2147483651 : Const SEMISYNCHRONOUS = 48 >>"%WinDir%\globalflags.vbs"
-    echo layerskey = "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" >>"%WinDir%\globalflags.vbs"
-    echo querytext = "SELECT ExecutablePath FROM Win32_Process WHERE ProcessID=" ^& TargetEvent.ProcessID >>"%WinDir%\globalflags.vbs"
-    echo Set mExec = GetObject^("winmgmts:{impersonationLevel=impersonate}!\\.\root\CIMv2"^).ExecQuery^(querytext,,SEMISYNCHRONOUS^) >>"%WinDir%\globalflags.vbs"
-    echo Set rProv = GetObject^("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv"^) >>"%WinDir%\globalflags.vbs"
-    echo Set regEx = New RegExp : regEx.Global = False : regEx.IgnoreCase = True >>"%WinDir%\globalflags.vbs"
-    echo filterprg = "^.:\\Program Files(?:\\| \(x86\)\\)(Common |dotnet|Microsoft |Windows |WindowsApps|MSBuild)" >>"%WinDir%\globalflags.vbs"
-    echo regEx.Pattern = "^.:\\Windows\\|^.\\ProgramData\\Package |\\AppData\\Local\\Temp\\|\\AppData\\Local\\Microsoft\\|" ^& filterprg >>"%WinDir%\globalflags.vbs"
-    echo For Each process in mExec >>"%WinDir%\globalflags.vbs"
-    echo     If Not IsNull^(process.ExecutablePath^) And Not regEx.Test^(process.ExecutablePath^) Then >>"%WinDir%\globalflags.vbs"
-    echo         process.GetOwnerSid sid : compatkey = sid ^& "\\" ^& layerskey >>"%WinDir%\globalflags.vbs"
-    echo         ret = rProv.GetStringValue^(HKU, compatkey, process.ExecutablePath, oldflags^) >>"%WinDir%\globalflags.vbs"
-    echo         If ^(ret ^<^> 0^) Then >>"%WinDir%\globalflags.vbs"
-    echo             rProv.CreateKey HKU, compatkey : rProv.SetStringValue HKU, compatkey, process.ExecutablePath, newflags >>"%WinDir%\globalflags.vbs"
-    echo         ElseIf ^(newflags = "~ "^) Then >>"%WinDir%\globalflags.vbs"
-    echo             rProv.DeleteValue HKU, compatkey, process.ExecutablePath >>"%WinDir%\globalflags.vbs"
-    echo         End If >>"%WinDir%\globalflags.vbs"
-    echo     End If >>"%WinDir%\globalflags.vbs"
-    echo Next >>"%WinDir%\globalflags.vbs"
-
-    set "SESSIONID=SessionID^!=0"
-    for %%i in (cvtres csc svchost DllHost RuntimeBroker backgroundTaskHost
-        rundll32 find findstr reg PING timeout taskkill Conhost cmd cscript
-        wscript powershell explorer OpenWith SearchProtocolHost SpeechRuntime browser_broker) do set "FILTER=!FILTER! AND ProcessName^!='%%i.exe'"
-    wmic /NAMESPACE:"\\root\subscription" PATH __EventFilter CREATE Name="GlobalAppCompatFlags", EventNameSpace="root\cimv2",QueryLanguage="WQL", Query="SELECT * from Win32_ProcessStartTrace WHERE !SESSIONID!!FILTER!" >nul 2>&1
-    wmic /NAMESPACE:"\\root\subscription" PATH ActiveScriptEventConsumer CREATE Name="GlobalAppCompatFlags", ScriptingEngine="VBScript",ScriptFileName="C:\Windows\globalflags.vbs" >nul 2>&1
-    wmic /NAMESPACE:"\\root\subscription" PATH __FilterToConsumerBinding CREATE Filter="__EventFilter.Name=\"GlobalAppCompatFlags\"", Consumer="ActiveScriptEventConsumer.Name=\"GlobalAppCompatFlags\"" >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "__COMPAT_LAYER" /t REG_SZ /v "~ DISABLEDXMAXIMIZEDWINDOWEDMODE" /f >nul 2>&1
 )
 
 echo Removing IRQ Priorities
@@ -525,7 +485,41 @@ if "!GPU!"=="INTEL" (
     ) >nul 2>&1
 )
 
-call "modules\choicebox.exe" "Disable Windows Search;Disable OneDrive;Disable Microsoft Store;Disable Xbox Apps;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Compatibility Assistant;Disable Diagnostics;Disable System Restore;Disable Disk Management;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable Hyper-V support;Disable Router support;Disable Smart Card support;Disable Biometric support;Disable Webcam and Scanner support;Disable VPN support;Disable Bitlocker support;Disable IPv6 support;Disable QoS support;Disable Files and Printers share support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
+call "modules\choicebox.exe" "Remove OneDrive;Remove Microsoft Store;Remove Xbox apps;Disable Windows Search;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Diagnostics;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable VPN support;Disable Bitlocker support;Disable QoS support;Disable Files and Printers share support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
+findstr /c:"Remove OneDrive" "%TMP%\services.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Remove OneDrive
+    taskkill /f /im "OneDrive.exe" >nul 2>&1
+    if exist "%WinDir%\System32\OneDriveSetup.exe" start /wait "%WinDir%\System32\OneDriveSetup.exe" /uninstall >nul 2>&1
+    if exist "%WinDir%\SysWOW64\OneDriveSetup.exe" start /wait "%WinDir%\SysWOW64\OneDriveSetup.exe" /uninstall >nul 2>&1
+    rd /s /q "%UserProfile%\OneDrive" >nul 2>&1
+    rd /s /q "%SystemDrive%\OneDriveTemp">nul 2>&1
+    rd /s /q "%LocalAppData%\Microsoft\OneDrive" >nul 2>&1
+    rd /s /q "%ProgramData%\Microsoft OneDrive" >nul 2>&1
+    reg delete "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f >nul 2>&1
+    reg delete "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f >nul 2>&1
+    call:WIM_TWEAK Microsoft-Windows-OneDrive-Setup-Package
+    call:WIM_TWEAK Microsoft-Windows-OneDrive-Setup-WOW64-Package
+)
+findstr /c:"Remove Microsoft Store" "%TMP%\services.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Removing Microsoft Store
+    for %%i in (iphlpsvc ClipSVC AppXSvc LicenseManager TokenBroker WalletService) do (
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
+        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
+    ) >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v "RemoveWindowsStore" /t REG_DWORD /d "1" /f >nul 2>&1
+    call:POWERSHELL "Get-AppxPackage *Store* | Remove-AppxPackage"
+)
+findstr /c:"Remove Xbox apps" "%TMP%\services.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Removing Xbox apps
+    for %%i in (XblGameSave XblAuthManager XboxNetApiSvc XboxGipSvc xbgm) do (
+        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
+        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
+    ) >nul 2>&1
+    call:POWERSHELL "$AppxPackages = @(\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\");foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -Name $AppxPackage -AllUsers | Remove-AppxPackage -AllUsers}"
+)
 findstr /c:"Disable Windows Search" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Search
@@ -538,43 +532,6 @@ if !ERRORLEVEL! equ 0 (
         taskkill /f /im "SearchApp.exe"
         move "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy.backup"
     ) >nul 2>&1
-)
-findstr /c:"Disable OneDrive" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling OneDrive
-    taskkill /f /im "OneDrive.exe" >nul 2>&1
-    if exist "%WinDir%\System32\OneDriveSetup.exe" start /wait "%WinDir%\System32\OneDriveSetup.exe" /uninstall >nul 2>&1
-    rd /s /q "%UserProfile%\OneDrive" >nul 2>&1
-    rd /s /q "%SystemDrive%\OneDriveTemp">nul 2>&1
-    rd /s /q "%LocalAppData%\Microsoft\OneDrive" >nul 2>&1
-    rd /s /q "%ProgramData%\Microsoft OneDrive" >nul 2>&1
-    reg delete "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f >nul 2>&1
-    reg delete "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableFileSyncNGSC" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableFileSync" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableMeteredNetworkFileSync" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableLibrariesDefaultSaveToOneDrive" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\OneDrive" /v "DisablePersonalSync" /t REG_DWORD /d "1" /f >nul 2>&1
-)
-findstr /c:"Disable Microsoft Store" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Microsoft Store
-    for %%i in (iphlpsvc ClipSVC AppXSvc LicenseManager TokenBroker WalletService) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v "RemoveWindowsStore" /t REG_DWORD /d "1" /f >nul 2>&1
-    call:POWERSHELL "Get-AppxPackage \"Microsoft.WindowsStore\" | Remove-AppxPackage"
-    call:POWERSHELL "Get-AppxPackage \"Microsoft.StorePurchaseApp\" | Remove-AppxPackage"
-)
-findstr /c:"Disable Xbox Apps" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Xbox Apps
-    for %%i in (XblGameSave XblAuthManager XboxNetApiSvc XboxGipSvc xbgm) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
-    call:POWERSHELL "$AppxPackages = @(\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\");foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -Name $AppxPackage -AllUsers | Remove-AppxPackage -AllUsers}"
 )
 findstr /c:"Disable Themes management" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -594,13 +551,6 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Schedule" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable Compatibility Assistant" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Compatibility Assistant
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "DisablePCA" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "DisableUAR" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\PcaSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-)
 findstr /c:"Disable Diagnostics" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Diagnostics
@@ -608,20 +558,6 @@ if !ERRORLEVEL! equ 0 (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
-)
-findstr /c:"Disable System Restore" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling System Restore
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\swprv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\VSS" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore" /v "DisableConfig" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore" /v "DisableSR " /t REG_DWORD /d "1" /f >nul 2>&1
-)
-findstr /c:"Disable Disk Management" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Disk Management
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\defragsvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\vds" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 findstr /c:"Disable Windows Update" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -650,43 +586,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable Printer support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Printer support
-    for %%i in (Fax Spooler PrintNotify PrintWorkflowUserSvc) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
-)
-findstr /c:"Disable Hyper-V support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Hyper-V support
-    for %%i in (HvHost vmickvpexchange vmicguestinterface vmicshutdown vmicheartbeat vmicvmsession vmicrdv vmictimesync vmicvss Wcifs) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
-)
-findstr /c:"Disable Router support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Router support
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\SmsRouter" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\AJRouter" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-)
-findstr /c:"Disable Smart Card support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Smart Card support
-    for %%i in (SCardSvr ScDeviceEnum SCPolicySvc CertPropSvc) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
-)
-findstr /c:"Disable Biometric support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Biometric support
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\WbioSrvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Biometrics" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
-)
-findstr /c:"Disable Webcam and Scanner support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Webcam and Scanner support
-    reg add "HKLM\SYSTEM\CurrentControlSet\services\stisvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Spooler" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 findstr /c:"Disable VPN support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -703,12 +603,6 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\fvevol" /v "ErrorControl" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\fvevol" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\BDESVC" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-)
-findstr /c:"Disable IPv6 support" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling IPv6 support
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip6"
 )
 findstr /c:"Disable QoS support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -758,7 +652,7 @@ call:POWERSHELL "Get-PnpDevice | Where-Object { $_.InstanceId -like 'ACPI\PNP010
 echo Disabling synthetic timer
 bcdedit /set useplatformtick Yes >nul 2>&1
 
-call:MSGBOX "Install Timer Resolution Service ?\n\nChange your Windows timer resolution to 0.5ms to improve performance and responsiveness for games and peripherals." vbYesNo+vbQuestion "Timer Resolution"
+call:MSGBOX "Would you like to install Timer Resolution Service ?\n\nChange your Windows timer resolution to 0.5ms to improve performance and responsiveness for games and peripherals." vbYesNo+vbQuestion "Timer Resolution"
 if !ERRORLEVEL! equ 6 (
     if "!VC!"=="NOT_INSTALLED" call:CHOCO vcredist-all
     echo Installing Timer Resolution Service
@@ -766,179 +660,185 @@ if !ERRORLEVEL! equ 6 (
     call "%WinDir%\SetTimerResolutionService.exe" -Install >nul 2>&1
 )
 
-call:MSGBOX "Remove all non-essential Microsoft Store Apps ?" vbYesNo+vbQuestion "Bloatware"
+call:MSGBOX "Would you like to remove all non-essential Microsoft Store Apps ?" vbYesNo+vbQuestion "Bloatware"
 if !ERRORLEVEL! equ 6 (
     echo Removing Windows bloatware
-    call:POWERSHELL "$ExcludedAppxPackages = @(\"Microsoft.WindowsStore\",\"Microsoft.StorePurchaseApp\",\"Microsoft.WindowsNotepad\",\"Microsoft.WindowsTerminal\",\"Microsoft.WindowsTerminalPreview\",\"Microsoft.WebMediaExtensions\",\"Microsoft.WindowsCamera\",\"Microsoft.WindowsCalculator\",\"Microsoft.Windows.Photos\",\"Microsoft.Photos.MediaEngineDLC\",\"Microsoft.HEVCVideoExtension\",\"Microsoft.ScreenSketch\",\"Microsoft.Windows.CapturePicker\",\"Microsoft.Paint\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\",\"AppUp.IntelGraphicsControlPanel\",\"AppUp.IntelGraphicsExperience\",\"NVIDIACorp.NVIDIAControlPanel\",\"AdvancedMicroDevicesInc-2.AMDRadeonSoftware\",\"RealtekSemiconductorCorp.RealtekAudioControl\");$AppxPackages = (Get-AppxPackage -PackageTypeFilter Bundle -AllUsers).Name | Select-String $ExcludedAppxPackages -NotMatch;foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -PackageTypeFilter Bundle -AllUsers | Where-Object -FilterScript {$_.Name -cmatch $AppxPackage} | Remove-AppxPackage -AllUsers}"
+    call:POWERSHELL "$ExcludedAppxPackages = @(\"Microsoft.DesktopAppInstaller\",\"Microsoft.WindowsStore\",\"Microsoft.StorePurchaseApp\",\"Microsoft.WindowsNotepad\",\"Microsoft.WindowsTerminal\",\"Microsoft.WindowsTerminalPreview\",\"Microsoft.WebMediaExtensions\",\"Microsoft.WindowsCamera\",\"Microsoft.WindowsCalculator\",\"Microsoft.Windows.Photos\",\"Microsoft.Photos.MediaEngineDLC\",\"Microsoft.HEVCVideoExtension\",\"Microsoft.ScreenSketch\",\"Microsoft.Windows.CapturePicker\",\"Microsoft.Paint\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\",\"AppUp.IntelGraphicsControlPanel\",\"AppUp.IntelGraphicsExperience\",\"NVIDIACorp.NVIDIAControlPanel\",\"AdvancedMicroDevicesInc-2.AMDRadeonSoftware\",\"RealtekSemiconductorCorp.RealtekAudioControl\");$AppxPackages = (Get-AppxPackage -PackageTypeFilter Bundle -AllUsers).Name | Select-String $ExcludedAppxPackages -NotMatch;foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -PackageTypeFilter Bundle -AllUsers | Where-Object -FilterScript {$_.Name -cmatch $AppxPackage} | Remove-AppxPackage -AllUsers}"
 )
 
-echo Network tweaks
-if "!NIC_TYPE!"=="WIFI" (netsh int tcp set supplemental internet congestionprovider=newreno >nul 2>&1) else netsh int tcp set supplemental internet congestionprovider=CUBIC >nul 2>&1
-call:MSGBOX "Would you like to disable network autotuning ?\n\nCan reduce bufferbloat, but it can significantly decrease your network speed." vbYesNo+vbQuestion "Network"
+call:MSGBOX "Would you like to apply network tweaks ?\n\nEssentially based on speedguide.net" vbYesNo+vbQuestion "Network"
 if !ERRORLEVEL! equ 6 (
-    echo Disabling Network Autotuning
-    netsh int tcp set global autotuninglevel=disabled >nul 2>&1
-) else netsh int tcp set global autotuninglevel=normal >nul 2>&1
-netsh int tcp set global ecncapability=disabled >nul 2>&1
-netsh int tcp set global dca=enabled >nul 2>&1
-netsh int tcp set global netdma=enabled >nul 2>&1
-netsh int tcp set global rsc=disabled >nul 2>&1
-netsh int tcp set global rss=enabled >nul 2>&1
-netsh int tcp set global timestamps=disabled >nul 2>&1
-netsh int tcp set global initialRto=2000 >nul 2>&1
-netsh int tcp set global nonsackrttresiliency=disabled >nul 2>&1
-netsh int tcp set global maxsynretransmissions=2 >nul 2>&1
-netsh int tcp set security mpp=disabled >nul 2>&1
-netsh int tcp set security profiles=disabled >nul 2>&1
-netsh int tcp set heuristics disabled >nul 2>&1
-netsh int ip set global neighborcachelimit=4096 >nul 2>&1
-call:POWERSHELL "Set-NetTCPSetting -SettingName InternetCustom -MinRto 300"
-call:POWERSHELL "Set-NetTCPSetting -SettingName InternetCustom -InitialCongestionWindow 10"
-call:POWERSHELL "Set-NetOffloadGlobalSetting -Chimney Disabled"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DefaultTTL" /t REG_DWORD /d "64" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "Tcp1323Opts" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpMaxDupAcks" /t REG_DWORD /d "2" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "SackOpts" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxUserPort" /t REG_DWORD /d "65534" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpTimedWaitDelay" /t REG_DWORD /d "30" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Winsock" /v "UseDelayedAcceptance" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Winsock" /v "MaxSockAddrLength" /t REG_DWORD /d "16" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Winsock" /v "MinSockAddrLength" /t REG_DWORD /d "16" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "LocalPriority" /t REG_DWORD /d "4" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "HostsPriority" /t REG_DWORD /d "5" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "DnsPriority" /t REG_DWORD /d "6" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "NetbtPriority" /t REG_DWORD /d "7" /f >nul 2>&1
-call:MSGBOX "Would you like to disable Nagle's Algorithm ?\n\nDisabling nagling can reduce latency/ping in some games.\nKeep in mind that disabling Nagle's algorithm may also have some negative effect on file transfers." vbYesNo+vbQuestion "Network"
-if !ERRORLEVEL! equ 6 (
-    echo Disabling Nagle's Algorithm
-    for /f %%i in ('wmic path win32_networkadapter get GUID^| findstr "{"') do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpAckFrequency" /t REG_DWORD /d "1" /f
-        reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpDelAckTicks" /t REG_DWORD /d "0" /f
-        reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TCPNoDelay" /t REG_DWORD /d "1" /f
-    ) >nul 2>&1
-)
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "EnableAutoDoh" /t REG_DWORD /d "2" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "DoNotHoldNicBuffers" /t REG_DWORD /d "1" /f >nul 2>&1
-
-echo Applying NIC settings
-if "!POWER_SAVING!"=="OFF" (
-    call:NIC_SETTINGS "PnPCapabilities" "24"
-    call:NIC_SETTINGS "PowerDownPll" "0"
-    call:NIC_SETTINGS "*DeviceSleepOnDisconnect" "0"
-    call:NIC_SETTINGS "AutoPowerSaveModeEnabled" "0"
-    call:NIC_SETTINGS "EEELinkAdvertisement" "0"
-    call:NIC_SETTINGS "EnableSavePowerNow" "0"
-    call:NIC_SETTINGS "EnablePowerManagement" "0"
-    call:NIC_SETTINGS "EnableDynamicPowerGating" "0"
-    call:NIC_SETTINGS "EnableConnectedPowerGating" "0"
-    call:NIC_SETTINGS "*NicAutoPowerSaver" "0"
-    call:NIC_SETTINGS "*EEE" "0"
-    call:NIC_SETTINGS "EEE" "0"
-    call:NIC_SETTINGS "AdvancedEEE" "0"
-    call:NIC_SETTINGS "AutoDisableGigabit" "0"
-    call:NIC_SETTINGS "EnableGreenEthernet" "0"
-    call:NIC_SETTINGS "GigaLite" "0"
-    call:NIC_SETTINGS "EnablePME" "0"
-    call:NIC_SETTINGS "PowerSavingMode" "0"
-    call:NIC_SETTINGS "EeeCtrlMode" "2"
-    call:NIC_SETTINGS "EeePhyEnable" "0"
-    call:NIC_SETTINGS "GphyGreenMode" "4"
-    call:NIC_SETTINGS "MasterSlave" "0"
-    call:NIC_SETTINGS "ULPMode" "0"
-    call:NIC_SETTINGS "ReduceSpeedOnPowerDown" "0"
-    call:NIC_SETTINGS "SavePowerNowEnabled" "0"
-    call:NIC_SETTINGS "SipsEnabled" "0"
-    call:NIC_SETTINGS "MIMOPowerSaveMode" "3"
-    call:NIC_SETTINGS "MPC" "0"
-    call:NIC_SETTINGS "PwrOut" "100"
-    call:NIC_SETTINGS "PowerSaveMode" "0"
-    call:NIC_SETTINGS "ApCompatMode" "0"
-    call:NIC_SETTINGS "bLeisurePs" "0"
-    call:NIC_SETTINGS "bLowPowerEnable" "0"
-    call:NIC_SETTINGS "bAdvancedLPs" "0"
-    call:NIC_SETTINGS "InactivePs" "0"
-    call:NIC_SETTINGS "Enable9KJFTpt" "0"
-    call:NIC_SETTINGS "DMACoalescing" "0"
-    call:NIC_SETTINGS "*PMWiFiRekeyOffload" "0"
-    call:NIC_SETTINGS "uAPSDSupport" "0"
-    call:NIC_SETTINGS "*PacketCoalescing" "0"
-    call:NIC_SETTINGS "*PMARPOffload" "0"
-    call:NIC_SETTINGS "*PMNSOffload" "0"
-    call:NIC_SETTINGS "NSOffloadEnable" "0"
-    call:NIC_SETTINGS "ARPOffloadEnable" "0"
-    call:NIC_SETTINGS "GTKOffloadEnable" "0"
-    call:NIC_SETTINGS "WoWLANLPSLevel" "0"
-    call:NIC_SETTINGS "WakeOnLink" "0"
-    call:NIC_SETTINGS "WakeOnSlot" "0"
-    call:NIC_SETTINGS "*ModernStandbyWoLMagicPacket" "0"
-    call:NIC_SETTINGS "*WakeOnMagicPacket" "0"
-    call:NIC_SETTINGS "*WakeOnPattern" "0"
-    call:NIC_SETTINGS "WakeUpModeCap" "0"
-    call:NIC_SETTINGS "S5WakeOnLan" "0"
-    call:NIC_SETTINGS "WolShutdownLinkSpeed" "2"
-    call:NIC_SETTINGS "WakeOnDisconnect" "0"
-    call:NIC_SETTINGS "WoWLANS5Support" "0"
-    call:NIC_SETTINGS "EnableWakeOnLan" "0"
-)
-call:NIC_SETTINGS "*FlowControl" "0"
-call:NIC_SETTINGS "FlowControlCap" "0"
-call:NIC_SETTINGS "*InterruptModeration" "1"
-call:NIC_SETTINGS "ITR" "65535"
-call:NIC_SETTINGS "*JumboPacket" "1514"
-call:NIC_SETTINGS "LargeSendOffloadJumboCombo" "0"
-call:NIC_SETTINGS "*LsoV1IPv4" "0"
-call:NIC_SETTINGS "*LsoV2IPv4" "0"
-call:NIC_SETTINGS "*LsoV2IPv6" "0"
-call:NIC_SETTINGS "LargeSendOffload" "0"
-call:NIC_SETTINGS "*PriorityVLANTag" "0"
-call:NIC_SETTINGS "*RSS" "1"
-call:NIC_SETTINGS "*RSSProfile" "3"
-call:NIC_SETTINGS "*RssBaseProcNumber" "1"
-call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$MaxNumRssQueues = [int](($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues').ValidRegistryValues | Measure-Object -Maximum).Maximum;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues' -RegistryValue $MaxNumRssQueues}"
-call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$iReceiveBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers').NumericParameterMaxValue;$iTransmitBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers').NumericParameterMaxValue;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers' -RegistryValue $iReceiveBuffers;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers' -RegistryValue $iTransmitBuffers}"
-if !CORES! gtr 6 (
-    call:NIC_SETTINGS "*IPChecksumOffloadIPv4" "0"
-    call:NIC_SETTINGS "*TCPChecksumOffloadIPv4" "0"
-    call:NIC_SETTINGS "*TCPChecksumOffloadIPv6" "0"
-    call:NIC_SETTINGS "*UDPChecksumOffloadIPv4" "0"
-    call:NIC_SETTINGS "*UDPChecksumOffloadIPv6" "0"
-    call:NIC_SETTINGS "TaskOffloadCap" "0"
-)
-call:NIC_SETTINGS "AlternateSemaphoreDelay" "0"
-call:NIC_SETTINGS "TxIntDelay" "1"
-call:NIC_SETTINGS "WirelessMode" "34"
-call:NIC_SETTINGS "CtsToItself" "1"
-call:NIC_SETTINGS "FatChannelIntolerant" "0"
-call:NIC_SETTINGS "b40Intolerant" "0"
-call:NIC_SETTINGS "ProtectionMode" "1"
-call:NIC_SETTINGS "RTD3Enable" "0"
-call:NIC_SETTINGS "IbssQosEnabled" "0"
-call:NIC_SETTINGS "IbssTxPower" "100"
-call:NIC_SETTINGS "ThroughputBoosterEnabled" "1"
-call:NIC_SETTINGS "PropPacketBurstEnabled" "1"
-call:NIC_SETTINGS "TxPwrLevel" "0"
-call:NIC_SETTINGS "Afterburner" "1"
-call:NIC_SETTINGS "FrameBursting" "1"
-if "!NIC_TYPE!"=="WIFI" (
-    call:MSGBOX "Would you like to disable Wi-Fi background scanning ?\n\nDisabling the Wi-Fi background scanning can improves latency.\nIt's not recommended if you have a very bad Wi-Fi signal strength ! " vbYesNo+vbQuestion "Network"
+    echo Applying network tweaks
+    if "!NIC_TYPE!"=="WIFI" (netsh int tcp set supplemental internet congestionprovider=newreno >nul 2>&1) else netsh int tcp set supplemental internet congestionprovider=CUBIC >nul 2>&1
+    call:MSGBOX "Would you like to disable network autotuning ?\n\nCan reduce bufferbloat, but it can significantly decrease your network speed." vbYesNo+vbQuestion "Network"
     if !ERRORLEVEL! equ 6 (
-        echo Disabling Wi-Fi background scanning
-        call:NIC_SETTINGS "RegROAMSensitiveLevel" "127"
-        call:NIC_SETTINGS "RoamAggressiveness" "0"
-        call:NIC_SETTINGS "RoamTrigger" "1"
-        call:NIC_SETTINGS "RoamDelta" "0"
-        call:NIC_SETTINGS "BgScanGlobalBlocking" "2"
-        for /f "tokens=1,2*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}" /s /v "*IfType"^| findstr /i "HKEY 0x47"') do if /i "%%i" neq "*IfType" (set "REGPATH_WIFI=%%i") else (
-            reg add "!REGPATH_WIFI!" /v "ScanWhenAssociated" /t REG_DWORD /d "0" /f
-            reg add "!REGPATH_WIFI!" /v "ScanDisableOnLowTraffic" /t REG_DWORD /d "1" /f
-            reg add "!REGPATH_WIFI!" /v "ScanDisableOnMediumTraffic" /t REG_DWORD /d "1" /f
-            reg add "!REGPATH_WIFI!" /v "ScanDisableOnHighOrMulticast" /t REG_DWORD /d "1" /f
-            reg add "!REGPATH_WIFI!" /v "ScanDisableOnLowLatencyOrQos" /t REG_DWORD /d "1" /f
+        echo Disabling Network Autotuning
+        netsh int tcp set global autotuninglevel=disabled >nul 2>&1
+    ) else netsh int tcp set global autotuninglevel=normal >nul 2>&1
+    netsh int tcp set global ecncapability=disabled >nul 2>&1
+    netsh int tcp set global dca=enabled >nul 2>&1
+    netsh int tcp set global netdma=enabled >nul 2>&1
+    netsh int tcp set global rsc=disabled >nul 2>&1
+    netsh int tcp set global rss=enabled >nul 2>&1
+    netsh int tcp set global timestamps=disabled >nul 2>&1
+    netsh int tcp set global initialRto=2000 >nul 2>&1
+    netsh int tcp set global nonsackrttresiliency=disabled >nul 2>&1
+    netsh int tcp set global maxsynretransmissions=2 >nul 2>&1
+    netsh int tcp set security mpp=disabled >nul 2>&1
+    netsh int tcp set security profiles=disabled >nul 2>&1
+    netsh int tcp set heuristics disabled >nul 2>&1
+    netsh int ip set global neighborcachelimit=4096 >nul 2>&1
+    call:POWERSHELL "Set-NetTCPSetting -SettingName InternetCustom -MinRto 300"
+    call:POWERSHELL "Set-NetTCPSetting -SettingName InternetCustom -InitialCongestionWindow 10"
+    call:POWERSHELL "Set-NetOffloadGlobalSetting -Chimney Disabled"
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DefaultTTL" /t REG_DWORD /d "64" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "Tcp1323Opts" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpMaxDupAcks" /t REG_DWORD /d "2" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "SackOpts" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxUserPort" /t REG_DWORD /d "65534" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpTimedWaitDelay" /t REG_DWORD /d "30" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Winsock" /v "UseDelayedAcceptance" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Winsock" /v "MaxSockAddrLength" /t REG_DWORD /d "16" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Winsock" /v "MinSockAddrLength" /t REG_DWORD /d "16" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "LocalPriority" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "HostsPriority" /t REG_DWORD /d "5" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "DnsPriority" /t REG_DWORD /d "6" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "NetbtPriority" /t REG_DWORD /d "7" /f >nul 2>&1
+    call:MSGBOX "Would you like to disable Nagle's Algorithm ?\n\nDisabling nagling can reduce latency/ping in some games.\nKeep in mind that disabling Nagle's algorithm may also have some negative effect on file transfers." vbYesNo+vbQuestion "Network"
+    if !ERRORLEVEL! equ 6 (
+        echo Disabling Nagle's Algorithm
+        for /f %%i in ('wmic path win32_networkadapter get GUID^| findstr "{"') do (
+            reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpAckFrequency" /t REG_DWORD /d "1" /f
+            reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpDelAckTicks" /t REG_DWORD /d "0" /f
+            reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TCPNoDelay" /t REG_DWORD /d "1" /f
         ) >nul 2>&1
+    )
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "EnableAutoDoh" /t REG_DWORD /d "2" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "DoNotHoldNicBuffers" /t REG_DWORD /d "1" /f >nul 2>&1
+
+    call:MSGBOX "Would you like to optimize your NICs ?\n\nWill set best settings to ensure maximum performance (throughput and latency stability)" vbYesNo+vbQuestion "Network"
+    if !ERRORLEVEL! equ 6 (
+        echo Applying NIC settings
+        if "!POWER_SAVING!"=="OFF" (
+            call:NIC_SETTINGS "PnPCapabilities" "24"
+            call:NIC_SETTINGS "PowerDownPll" "0"
+            call:NIC_SETTINGS "*DeviceSleepOnDisconnect" "0"
+            call:NIC_SETTINGS "AutoPowerSaveModeEnabled" "0"
+            call:NIC_SETTINGS "EEELinkAdvertisement" "0"
+            call:NIC_SETTINGS "EnableSavePowerNow" "0"
+            call:NIC_SETTINGS "EnablePowerManagement" "0"
+            call:NIC_SETTINGS "EnableDynamicPowerGating" "0"
+            call:NIC_SETTINGS "EnableConnectedPowerGating" "0"
+            call:NIC_SETTINGS "*NicAutoPowerSaver" "0"
+            call:NIC_SETTINGS "*EEE" "0"
+            call:NIC_SETTINGS "EEE" "0"
+            call:NIC_SETTINGS "AdvancedEEE" "0"
+            call:NIC_SETTINGS "AutoDisableGigabit" "0"
+            call:NIC_SETTINGS "EnableGreenEthernet" "0"
+            call:NIC_SETTINGS "GigaLite" "0"
+            call:NIC_SETTINGS "EnablePME" "0"
+            call:NIC_SETTINGS "PowerSavingMode" "0"
+            call:NIC_SETTINGS "EeeCtrlMode" "2"
+            call:NIC_SETTINGS "EeePhyEnable" "0"
+            call:NIC_SETTINGS "GphyGreenMode" "4"
+            call:NIC_SETTINGS "MasterSlave" "0"
+            call:NIC_SETTINGS "ULPMode" "0"
+            call:NIC_SETTINGS "ReduceSpeedOnPowerDown" "0"
+            call:NIC_SETTINGS "SavePowerNowEnabled" "0"
+            call:NIC_SETTINGS "SipsEnabled" "0"
+            call:NIC_SETTINGS "MIMOPowerSaveMode" "3"
+            call:NIC_SETTINGS "MPC" "0"
+            call:NIC_SETTINGS "PwrOut" "100"
+            call:NIC_SETTINGS "PowerSaveMode" "0"
+            call:NIC_SETTINGS "ApCompatMode" "0"
+            call:NIC_SETTINGS "bLeisurePs" "0"
+            call:NIC_SETTINGS "bLowPowerEnable" "0"
+            call:NIC_SETTINGS "bAdvancedLPs" "0"
+            call:NIC_SETTINGS "InactivePs" "0"
+            call:NIC_SETTINGS "Enable9KJFTpt" "0"
+            call:NIC_SETTINGS "DMACoalescing" "0"
+            call:NIC_SETTINGS "*PMWiFiRekeyOffload" "0"
+            call:NIC_SETTINGS "uAPSDSupport" "0"
+            call:NIC_SETTINGS "*PacketCoalescing" "0"
+            call:NIC_SETTINGS "*PMARPOffload" "0"
+            call:NIC_SETTINGS "*PMNSOffload" "0"
+            call:NIC_SETTINGS "NSOffloadEnable" "0"
+            call:NIC_SETTINGS "ARPOffloadEnable" "0"
+            call:NIC_SETTINGS "GTKOffloadEnable" "0"
+            call:NIC_SETTINGS "WoWLANLPSLevel" "0"
+            call:NIC_SETTINGS "WakeOnLink" "0"
+            call:NIC_SETTINGS "WakeOnSlot" "0"
+            call:NIC_SETTINGS "*ModernStandbyWoLMagicPacket" "0"
+            call:NIC_SETTINGS "*WakeOnMagicPacket" "0"
+            call:NIC_SETTINGS "*WakeOnPattern" "0"
+            call:NIC_SETTINGS "WakeUpModeCap" "0"
+            call:NIC_SETTINGS "S5WakeOnLan" "0"
+            call:NIC_SETTINGS "WolShutdownLinkSpeed" "2"
+            call:NIC_SETTINGS "WakeOnDisconnect" "0"
+            call:NIC_SETTINGS "WoWLANS5Support" "0"
+            call:NIC_SETTINGS "EnableWakeOnLan" "0"
+        )
+        call:NIC_SETTINGS "*FlowControl" "0"
+        call:NIC_SETTINGS "FlowControlCap" "0"
+        call:NIC_SETTINGS "*InterruptModeration" "1"
+        call:NIC_SETTINGS "ITR" "65535"
+        call:NIC_SETTINGS "*JumboPacket" "1514"
+        call:NIC_SETTINGS "LargeSendOffloadJumboCombo" "0"
+        call:NIC_SETTINGS "*LsoV1IPv4" "0"
+        call:NIC_SETTINGS "*LsoV2IPv4" "0"
+        call:NIC_SETTINGS "*LsoV2IPv6" "0"
+        call:NIC_SETTINGS "LargeSendOffload" "0"
+        call:NIC_SETTINGS "*PriorityVLANTag" "0"
+        call:NIC_SETTINGS "*RSS" "1"
+        call:NIC_SETTINGS "*RSSProfile" "3"
+        call:NIC_SETTINGS "*RssBaseProcNumber" "1"
+        call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$MaxNumRssQueues = [int](($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues').ValidRegistryValues | Measure-Object -Maximum).Maximum;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues' -RegistryValue $MaxNumRssQueues}"
+        call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$iReceiveBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers').NumericParameterMaxValue;$iTransmitBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers').NumericParameterMaxValue;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers' -RegistryValue $iReceiveBuffers;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers' -RegistryValue $iTransmitBuffers}"
+        if !CORES! gtr 6 (
+            call:NIC_SETTINGS "*IPChecksumOffloadIPv4" "0"
+            call:NIC_SETTINGS "*TCPChecksumOffloadIPv4" "0"
+            call:NIC_SETTINGS "*TCPChecksumOffloadIPv6" "0"
+            call:NIC_SETTINGS "*UDPChecksumOffloadIPv4" "0"
+            call:NIC_SETTINGS "*UDPChecksumOffloadIPv6" "0"
+            call:NIC_SETTINGS "TaskOffloadCap" "0"
+        )
+        call:NIC_SETTINGS "AlternateSemaphoreDelay" "0"
+        call:NIC_SETTINGS "TxIntDelay" "1"
+        call:NIC_SETTINGS "WirelessMode" "34"
+        call:NIC_SETTINGS "CtsToItself" "1"
+        call:NIC_SETTINGS "FatChannelIntolerant" "0"
+        call:NIC_SETTINGS "b40Intolerant" "0"
+        call:NIC_SETTINGS "ProtectionMode" "1"
+        call:NIC_SETTINGS "RTD3Enable" "0"
+        call:NIC_SETTINGS "IbssQosEnabled" "0"
+        call:NIC_SETTINGS "IbssTxPower" "100"
+        call:NIC_SETTINGS "ThroughputBoosterEnabled" "1"
+        call:NIC_SETTINGS "PropPacketBurstEnabled" "1"
+        call:NIC_SETTINGS "TxPwrLevel" "0"
+        call:NIC_SETTINGS "Afterburner" "1"
+        call:NIC_SETTINGS "FrameBursting" "1"
+        if "!NIC_TYPE!"=="WIFI" (
+            call:MSGBOX "Would you like to disable Wi-Fi background scanning ?\n\nDisabling the Wi-Fi background scanning can improves latency.\nIt's not recommended if you have a very bad Wi-Fi signal strength ! " vbYesNo+vbQuestion "Network"
+            if !ERRORLEVEL! equ 6 (
+                echo Disabling Wi-Fi background scanning
+                call:NIC_SETTINGS "RegROAMSensitiveLevel" "127"
+                call:NIC_SETTINGS "RoamAggressiveness" "0"
+                call:NIC_SETTINGS "RoamTrigger" "1"
+                call:NIC_SETTINGS "RoamDelta" "0"
+                call:NIC_SETTINGS "BgScanGlobalBlocking" "2"
+                for /f "tokens=1,2*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}" /s /v "*IfType"^| findstr /i "HKEY 0x47"') do if /i "%%i" neq "*IfType" (set "REGPATH_WIFI=%%i") else (
+                    reg add "!REGPATH_WIFI!" /v "ScanWhenAssociated" /t REG_DWORD /d "0" /f
+                    reg add "!REGPATH_WIFI!" /v "ScanDisableOnLowTraffic" /t REG_DWORD /d "1" /f
+                    reg add "!REGPATH_WIFI!" /v "ScanDisableOnMediumTraffic" /t REG_DWORD /d "1" /f
+                    reg add "!REGPATH_WIFI!" /v "ScanDisableOnHighOrMulticast" /t REG_DWORD /d "1" /f
+                    reg add "!REGPATH_WIFI!" /v "ScanDisableOnLowLatencyOrQos" /t REG_DWORD /d "1" /f
+                ) >nul 2>&1
+            )
+        )
     )
 )
 
-call "modules\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable Storage Sense;Disable WiFi Sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable Windows Keylogger;Disable application compatability telemetry;Disable license telemetry;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Windows Customer Experience Improvement Program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
+call "modules\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable Storage Sense;Disable WiFi Sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable Windows Keylogger;Disable application compatability telemetry;Disable license checking;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Cortana;Disable Windows Customer Experience Improvement Program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
 findstr /c:"Disable privacy settings experience at sign-in" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling privacy settings experience at sign-in
@@ -1060,9 +960,9 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "AITEnable" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "DisableInventory" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable license telemetry" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable license checking" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling license telemetry
+    echo Disabling license checking
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "NoGenTicket" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "AllowWindowsEntitlementReactivation" /t REG_DWORD /d "1" /f >nul 2>&1
 )
@@ -1091,6 +991,12 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "PublishUserActivities" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "UploadUserActivities" /t REG_DWORD /d "0" /f >nul 2>&1
 )
+findstr /c:"Disable Cortana" "%TMP%\privacy.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Disabling Cortana
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
+)
 findstr /c:"Disable Windows Customer Experience Improvement Program" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Customer Experience Improvement Program
@@ -1113,7 +1019,7 @@ if !ERRORLEVEL! equ 0 (
 )
 del /f /q "%TMP%\privacy.txt" >nul 2>&1
 
-call "modules\choicebox.exe" "Disable Autoplay and Autorun;Disable NetBIOS;Disable Remote Assistance;Disable Remote Access;Disable LLMNR;Disable Windows Browser Protocol;Disable WPAD;Disable WDigest;Disable Windows Scripting Host;Disable SMBv1;Disable Null Sessions;Block Untrusted Fonts" "Here you can secure your system against threats" "Hardenning" /C:2 >"%TMP%\hardenning.txt"
+call "modules\choicebox.exe" "Disable Autoplay and Autorun;Disable NetBIOS;Disable Remote Assistance;Disable Remote Access;Disable LLMNR;Disable Windows Browser Protocol;Disable WPAD;Disable WDigest;Disable Windows Scripting Host;Harden SMB;Block Untrusted Fonts" "Here you can secure your system against threats" "Hardenning" /C:2 >"%TMP%\hardenning.txt"
 findstr /c:"Disable Autoplay and Autorun" "%TMP%\hardenning.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Disabling Autoplay and Autorun
@@ -1173,30 +1079,28 @@ if !ERRORLEVEL! equ 0 (
     echo Disabling Windows Scripting Host
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "RunScript" /t REG_SZ /d "%SystemRoot%\System32\cmd.exe /c reg add \"HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings\" /v \"Enabled\" /t REG_DWORD /d \"0\" /f" /f >nul 2>&1
 )
-findstr /c:"Disable SMBv1" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Harden SMB" "%TMP%\hardenning.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling SMBv1
-    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol"
-    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Client"
-    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Server"
-)
-findstr /c:"Disable Null Sessions" "%TMP%\hardenning.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Disabling Null Sessions
+    echo Hardening SMB
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RestrictAnonymous" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RestrictAnonymousSAM" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "EveryoneIncludesAnonymous" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "NoLMHash" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "LMCompatibilityLevel" /t REG_DWORD /d "5" /f >nul 2>&1
+    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol"
+    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Client"
+    call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Server"
+    call:POWERSHELL "Set-SmbClientConfiguration -RequireSecuritySignature $True -Force"
+    call:POWERSHELL "Set-SmbClientConfiguration -EnableSecuritySignature $True -Force"
+    call:POWERSHELL "Set-SmbServerConfiguration -EncryptData $True -Force"
+    call:POWERSHELL "Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force"
 )
 findstr /c:"Block Untrusted Fonts" "%TMP%\hardenning.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Blocking Untrusted Fonts
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_QWORD /d "1000000000000" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" /v "MitigationOptions_FontBocking" /t REG_QWORD /d "1000000000000" /f >nul 2>&1
 )
 del /f /q "%TMP%\hardenning.txt" >nul 2>&1
-
-echo Disabling Cortana from taskbar
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo Disabling Bing from Windows Search
 reg add "HKU\!USER_SID!\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -1261,7 +1165,7 @@ reg add "HKU\!USER_SID!\Control Panel\Accessibility" /v "DynamicScrollbars" /t R
 echo Disabling user tracking (recent run)
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInstrumentation" /d "1" /t REG_DWORD /f >nul 2>&1
 
-call "modules\choicebox.exe" "Remove 3D Objects from File Explorer;Remove Library from File Explorer;Remove Favorites from File Explorer;Remove Family Group from File Explorer;Remove Network from File Explorer;Remove OneDrive from File Explorer;Remove Quick Access from File Explorer;Remove All Folders in 'This PC' from File Explorer;Hide Search Box from Taskbar;Hide Task View from Taskbar;Hide People from Taskbar;Hide Windows Ink Workspace from Taskbar;Hide Meet Now from Taskbar;Hide News and Interests from Taskbar;Hide Windows Defender from Taskbar;Enable Small Icons in Taskbar;Show All Tray Icons on Taskbar;Show Seconds on Taskbar Clock;Hide Recently Added Apps in Start Menu;Hide Most Used Apps in Start Menu;Unpin all Start Menu tiles;Unpin all Taskbar apps;Increase Taskbar Transparency Level;Disable Transparency Effect Theme;Enable Dark Mode Theme;Set Desktop Background to Solid Color;Remove mouse scheme;Adjust visual effects to best performance;Disable Lock Screen;Reduce Size of Buttons Close Minimize Maximize;Disable Delete Confirmation Box for Recycle Bin;Show File Extensions;Show Hidden Folders;Disable Shortcut Name Extension;Add Take Ownership to Context Menu;Add Classic Personalize Context Menu;Restore Classic Windows Photo Viewer;Enable Classic Volume Control;Enable Classic Alt Tab;Enable Windows 8 Network Flayout;Disable Boot Graphics;Enable F8 Boot Menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
+call "modules\choicebox.exe" "Remove 3D Objects from File Explorer;Remove Library from File Explorer;Remove Favorites from File Explorer;Remove Family Group from File Explorer;Remove Network from File Explorer;Remove OneDrive from File Explorer;Remove Quick Access from File Explorer;Remove All Folders in 'This PC' from File Explorer;Hide Search Box from Taskbar;Hide Task View from Taskbar;Hide People from Taskbar;Hide Windows Ink Workspace from Taskbar;Hide Meet Now from Taskbar;Hide News and Interests from Taskbar;Hide Windows Defender from Taskbar;Hide Cortana from Taskbar;Enable Small Icons in Taskbar;Show All Tray Icons on Taskbar;Show Seconds on Taskbar Clock;Hide Recently Added Apps in Start Menu;Hide Most Used Apps in Start Menu;Unpin all Start Menu tiles;Increase Taskbar Transparency Level;Disable Transparency Effect Theme;Enable Dark Mode Theme;Set Desktop Background to Solid Color;Remove mouse scheme;Adjust visual effects to best performance;Disable Lock Screen;Reduce Size of Buttons Close Minimize Maximize;Disable Delete Confirmation Box for Recycle Bin;Show File Extensions;Show Hidden Folders;Disable Shortcut Name Extension;Add Take Ownership to Context Menu;Add Classic Personalize Context Menu;Restore Classic Windows Photo Viewer;Enable Classic Volume Control;Enable Classic Alt Tab;Enable Windows 8 Network Flayout;Disable Boot Graphics;Enable F8 Boot Menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
 findstr /c:"Remove 3D Objects from File Explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Removing 3D Objects from File Explorer
@@ -1346,6 +1250,11 @@ if !ERRORLEVEL! equ 0 (
     echo Hiding Windows Defender from Taskbar
     reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "SecurityHealth" /f >nul 2>&1
 )
+findstr /c:"Hide Cortana from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo Hiding Cortana from Taskbar
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
+)
 findstr /c:"Enable Small Icons in Taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Enabling Small Icons in Taskbar
@@ -1375,11 +1284,6 @@ findstr /c:"Unpin all Start Menu tiles" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     echo Unpinning all Start Menu tiles
     for /f "tokens=*" %%i in ('reg query "HKU\!USER_SID!\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\Cache\DefaultAccount" /s /f "start.tilegrid"^| findstr "start.tilegrid"') do reg delete "%%i" /f >nul 2>&1
-)
-findstr /c:"Unpin all Taskbar apps" "%TMP%\interface.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    echo Unpinning all Taskbar apps
-    call:POWERSHELL "((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -notmatch 'File Explorer'}).Verbs() | ?{$_.Name.replace('&','') -match 'Unpin from taskbar'} | %{$_.DoIt(); $exec = $true}"
 )
 findstr /c:"Increase Taskbar Transparency Level" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -2201,7 +2105,7 @@ if "!OPENTOOLS!"=="True" start "" "explorer.exe" "%UserProfile%\Documents\_Tools
 goto TOOLS_MENU_CLEAR
 
 :CREDITS
-call:MSGBOX "Revision community - Learned a lot about PC Tweaking\nTheBATeam community - Coding help\nMathieu Squidward - Coding help\nFelip - Code inspirations from his 'Tweaks for Gaming' batch\nTimecard - For his research about PC optimization, configuration and setup\n\nThanks to many other people for help with testing and suggestions.\n\n                                                                         Created by Artanis" vbInformation "Credits"
+call:MSGBOX "Revision community - Learned a lot about PC Tweaking\nTheBATeam community - Coding help\nMathieu Squidward - Coding help\nFelip - Code inspirations from his 'Tweaks for Gaming' batch\nAMIT - Code to disable process mitigation\nTimecard - For his research about PC optimization, configuration and setup\n\nThanks to many other people for help with testing and suggestions.\n\n                                                                         Created by Artanis" vbInformation "Credits"
 goto MAIN_MENU
 
 :HELP
@@ -2239,6 +2143,12 @@ REM SvcHost
 for /f "skip=1" %%i in ('wmic os get TotalVisibleMemorySize') do if not defined SVCHOST (set /a SVCHOST=%%i+1024000)
 REM User SID
 for /f %%i in ('wmic path Win32_UserAccount where name^="%username%" get sid ^| findstr "S-"') do set "USER_SID=%%i"
+goto:eof
+
+:WIM_TWEAK
+reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /ve >nul 2>&1
+if !ERRORLEVEL! equ 1 call:CHOCO dotnet3.5 & DISM /online /Enable-Feature /FeatureName:"NetFx3" /All /NoRestart
+call "modules/install_wim_tweak.exe" /o /c %~1 /r >nul 2>&1
 goto:eof
 
 :NIC_SETTINGS
