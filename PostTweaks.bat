@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.2.0a"
-set "VERSION_INFO=14/05/2022"
+set "VERSION=2.2.1"
+set "VERSION_INFO=15/05/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -126,18 +126,19 @@ timeout /t 3 /nobreak >nul 2>&1
 goto MAIN_MENU
 
 :SYSTWEAKS
-call:MSGBOX "Do you want to create a registry backup and a restore point ?" vbYesNo+vbQuestion "System Restore"
+call:MSGBOX "Do you want to create a registry backup and restore point ?" vbYesNo+vbQuestion "System Restore"
 if !ERRORLEVEL! equ 6 (
+    echo !INFO! Creating a registry backup and restore point
     call:POWERSHELL "Checkpoint-Computer -Description 'Post Tweaks' -RestorePointType 'MODIFY_SETTINGS'"
     if not exist "%UserProfile%\desktop\Registry Backup" md "%UserProfile%\desktop\Registry Backup" & for %%i in (HKLM HKCU HKCR HKU HKCC) do reg export "%%i" "%UserProfile%\desktop\Registry Backup\%%i.reg" >nul 2>&1
 )
 
-echo Setting TEMP and TMP Environment variables
+echo !INFO! Setting TEMP and TMP environment variables
 if exist "%LOCALAPPDATA%\TEMP" rd /s /q "%LOCALAPPDATA%\TEMP" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Environment" /v "TMP" /t REG_SZ /d "%USERPROFILE%\AppData\Local\Temp" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Environment" /v "TEMP" /t REG_SZ /d "%USERPROFILE%\AppData\Local\Temp" /f >nul 2>&1
 
-echo Disabling Windows settings synchronization
+echo !INFO! Disabling Windows settings synchronization
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync" /v "SyncPolicy" /t REG_DWORD /d "5" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSettingSync" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSettingSyncUserOverride" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -148,23 +149,23 @@ if "!PC_TYPE!"=="LAPTOP/TABLET" (
     if !ERRORLEVEL! equ 6 set "POWER_SAVING=OFF"
 ) else set "POWER_SAVING=OFF"
 
-call "modules\choicebox.exe" "Disable User Access Control (UAC);Disable SmartScreen;Remove Windows Defender;Disable Windows Firewall;Disable automatic maintenance;Disable Data Execution Prevention (DEP);Disable DMA remapping;Disable Fault Tolerant Heap (FTH);Disable Meltdown/Spectre;Disable All System Mitigations" "Security features can have a negative effect on performance. Use at your own risk." "Security" /C:2 >"%TMP%\security.txt"
+call "modules\choicebox.exe" "Disable User Access Control (UAC);Disable SmartScreen;Remove Windows Defender;Disable Windows firewall;Disable automatic maintenance;Disable Data Execution Prevention (DEP);Disable DMA remapping;Disable Fault Tolerant Heap (FTH);Disable Meltdown/Spectre;Disable system mitigations" "Security features can have a negative effect on performance. Use at your own risk." "Security" /C:2 >"%TMP%\security.txt"
 findstr /c:"Disable User Access Control (UAC)" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling UAC
+    echo !INFO! Disabling UAC
     for %%i in (EnableLUA ConsentPromptBehaviorAdmin PromptOnSecureDesktop FilterAdministratorToken) do reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\luafv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 findstr /c:"Disable SmartScreen" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling SmartScreen
+    echo !INFO! Disabling SmartScreen
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "EnableSmartScreen" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "SmartScreenEnabled" /t REG_SZ /d "Off" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost" /v "EnableWebContentEvaluation" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Remove Windows Defender" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Windows Defender
+    echo !INFO! Removing Windows Defender
     call:WIM_TWEAK Microsoft-Windows-SecurityCenter
     call:WIM_TWEAK Windows-Defender
     call:WIM_TWEAK Microsoft-Windows-HVSI
@@ -175,48 +176,48 @@ if !ERRORLEVEL! equ 0 (
     call:WIM_TWEAK Microsoft-OneCore-VirtualizationBasedSecurity
     reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "SecurityHealth" /f >nul 2>&1
 )
-findstr /c:"Disable Windows Firewall" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable Windows firewall" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Firewall
+    echo !INFO! Disabling Windows firewall
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\mpssvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\BFE" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 findstr /c:"Disable automatic maintenance" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling automatic maintenance
+    echo !INFO! Disabling automatic maintenance
     reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable Data Execution Prevention (DEP)" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling DEP
+    echo !INFO! Disabling DEP
     bcdedit /set nx AlwaysOff >nul 2>&1
 )
 findstr /c:"Disable DMA remapping" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling DMA remapping
+    echo !INFO! Disabling DMA remapping
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\DmaGuard\DeviceEnumerationPolicy" /v "value" /t REG_DWORD /d "2" /f >nul 2>&1
     for /f "tokens=1" %%i in ('driverquery') do reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%i\Parameters" /v "DmaRemappingCompatible" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable Fault Tolerant Heap (FTH)" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling FTH
+    echo !INFO! Disabling FTH
     reg add "HKLM\SOFTWARE\Microsoft\FTH" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg delete "HKLM\SOFTWARE\Microsoft\FTH\State" /f >nul 2>&1
 )
 findstr /c:"Disable Meltdown/Spectre" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Meltdown/Spectre and removing microcode update
+    echo !INFO! Disabling Meltdown/Spectre and removing microcode update
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
     del /f /q "%WinDir%\System32\mcupdate_GenuineIntel.dll" >nul 2>&1
     del /f /q "%WinDir%\System32\mcupdate_AuthenticAMD.dll" >nul 2>&1
 )
-findstr /c:"Disable All System Mitigations" "%TMP%\security.txt" >nul 2>&1
+findstr /c:"Disable system mitigations" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Process Mitigations
+    echo !INFO! Disabling system mitigations
     call:POWERSHELL "Set-ProcessMitigation -System -Disable CFG"
     for /f "tokens=3 skip=2" %%i in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%i
     for /l %%i in (0,1,9) do set mitigation_mask=!mitigation_mask:%%i=2!
@@ -225,58 +226,58 @@ if !ERRORLEVEL! equ 0 (
 )
 del /f /q "%TMP%\security.txt" >nul 2>&1
 
-echo Speed up start time
+echo !INFO! Speed up start time
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "DelayedDesktopSwitchTimeout" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "StartupDelayInMSec" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Decrease shutdown time
+echo !INFO! Decrease shutdown time
 reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "AutoEndTasks" /t REG_SZ /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "HungAppTimeout" /t REG_SZ /d "1000" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f >nul 2>&1
 
-echo Sound communications do nothing
+echo !INFO! Sound communications do nothing
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t REG_DWORD /d "3" /f >nul 2>&1
 
-echo Disabling startup sound
+echo !INFO! Disabling startup sound
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\BootAnimation" /v "DisableStartupSound" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Enabling num Lock at startup
+echo !INFO! Enabling num Lock at startup
 reg add "HKU\!USER_SID!\Control Panel\Keyboard" /v "InitialKeyboardIndicators" /t REG_DWORD /d "2" /f >nul 2>&1
 
-echo Disabling mouse acceleration
+echo !INFO! Disabling mouse acceleration
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d "10" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >nul 2>&1
 
-echo Disabling fast startup
+echo !INFO! Disabling fast startup
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v "HiberbootEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Importing Power Plan
+echo !INFO! Importing power plan
 powercfg -delete 11111111-1111-1111-1111-111111111111 >nul 2>&1
 powercfg -import "%~dp0\resources\PostTweaks.pow" 11111111-1111-1111-1111-111111111111 >nul 2>&1
 powercfg -setactive 11111111-1111-1111-1111-111111111111 >nul 2>&1
 
 if "!POWER_SAVING!"=="OFF" (
-    echo Disabling power throttling
+    echo !INFO! Disabling power throttling
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f >nul 2>&1
 
-    echo Disabling hibernation
+    echo !INFO! Disabling hibernation
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "HibernateEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
-    echo Disabling Timer Coalescing
+    echo !INFO! Disabling timer coalescing
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f >nul 2>&1
 
     if "!HT_SMT!"=="OFF" (
         call:MSGBOX "Would you like to disable CPU idle state ?\n\nDisabling the CPU idle state reduces latency but increases the CPU temperature." vbYesNo+vbQuestion "Power settings"
         if !ERRORLEVEL! equ 6 (
-            echo Disabling CPU idle state
+            echo !INFO! Disabling CPU idle state
             powercfg -setacvalueindex scheme_current sub_processor 5d76a2ca-e8c0-402f-a133-2158492d58ad 1 >nul 2>&1
             powercfg -setactive scheme_current >nul 2>&1
         )
     )
 
-    echo Disabling storage power savings
+    echo !INFO! Disabling storage power savings
     for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (EnableHIPM EnableDIPM EnableHDDParking) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f "%%i" ^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
     for /f %%i in ('call "modules\smartctl.exe" --scan') do (
@@ -284,64 +285,64 @@ if "!POWER_SAVING!"=="OFF" (
         call "modules\smartctl.exe" -s aam,off %%i
     ) >nul 2>&1
 
-    echo Disabling USB power savings
+    echo !INFO! Disabling USB power savings
     for %%i in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended
         SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled
         D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 
-echo Disabling background apps
+echo !INFO! Disabling background apps
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\bam" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\dam" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 
-echo Organize services into associated host groups
+echo !INFO! Organize services into associated host groups
 reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /t REG_DWORD /d "!SVCHOST!" /f >nul 2>&1
 
-echo Process scheduling
+echo !INFO! Process scheduling
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "38" /f >nul 2>&1
 
-echo Multimedia class scheduler
+echo !INFO! Multimedia class scheduler
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d "10" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NoLazyMode" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "LazyModeTimeout" /t REG_DWORD /d "150000" /f >nul 2>&1
 
-echo Disabling 8dot3 name creation for all volumes on the system
+echo !INFO! Disabling 8dot3 name creation for all volumes on the system
 fsutil behavior set disable8dot3 1 >nul 2>&1
 
-echo Disable NTS last-access timestamp and NTS log
+echo !INFO! Disabling NTS last-access timestamp and NTS log
 fsutil behavior set disablelastaccess 1 >nul 2>&1
 
-echo Disabling File System Compression
+echo !INFO! Disabling file system compression
 fsutil behavior set disablecompression 1 >nul 2>&1
 
-echo Disabling File System Encryption
+echo !INFO! Disabling file system encryption
 fsutil behavior set disableencryption 1 >nul 2>&1
 
-echo Disabling virtual memory pagefile encryption
+echo !INFO! Disabling virtual memory pagefile encryption
 fsutil behavior set encryptpagingfile 0 >nul 2>&1
 
-echo Increasing the space reserved for the MFT
+echo !INFO! Increasing the space reserved for the MFT
 fsutil behavior set memoryusage 2 >nul 2>&1
 
-echo Increasing file system memory cache size
+echo !INFO! Increasing file system memory cache size
 fsutil behavior set mftzone 2 >nul 2>&1
 
-echo Disabling random drivers verification
+echo !INFO! Disabling random drivers verification
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management" /v "DontVerifyRandomDrivers" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Disallow drivers to get paged into virtual memory
+echo !INFO! Disallow drivers to get paged into virtual memory
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Disabling Windows attempt to save as much RAM as possible
+echo !INFO! Disabling Windows attempt to save as much RAM as possible
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingCombining" /t REG_DWORD /d "1" /f >nul 2>&1
 
-if !CORES! gtr 6 echo Enabling DistributeTimers & reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "DistributeTimers" /t REG_DWORD /d "1" /f >nul 2>&1
+if !CORES! gtr 6 echo !INFO! Enabling DistributeTimers & reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "DistributeTimers" /t REG_DWORD /d "1" /f >nul 2>&1
 
 if "!STORAGE_TYPE!"=="SSD/NVMe" (
-    echo Applying SSD/NVMe Tweaks
+    echo !INFO! Applying SSD/NVMe tweaks
     fsutil behavior set disabledeletenotify 0 >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management\prefetchparameters" /v "EnableBoottrace" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management\prefetchparameters" /v "EnablePrefetcher" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -355,15 +356,15 @@ if "!STORAGE_TYPE!"=="SSD/NVMe" (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\rdyboost" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 
-echo Disabling Persistent Time Stamp
+echo !INFO! Disabling persistent time stamp
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Reliability" /v "TimeStampInterval" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Disabling Memory compression
+echo !INFO! Disabling memory compression
 call:POWERSHELL "Disable-MMAgent -mc"
 
 call:MSGBOX "Would you like to enable Fullscreen Exclusive and disable GameBar ?\n\nBy default Windows use fullscreen optimization. It overrides the fullscreen mode in games and forces it to a borderless hybrid mode which comes with high latency and lower performance." vbYesNo+vbQuestion "Fullscreen Exclusive"
 if !ERRORLEVEL! equ 6 (
-    echo Enabling FSE and disabling GameBar
+    echo !INFO! Enabling FSE and disabling GameBar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "AutoGameModeEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "GamePanelStartupTipIndex" /t REG_DWORD /d "3" /f >nul 2>&1
@@ -385,27 +386,26 @@ if !ERRORLEVEL! equ 6 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "__COMPAT_LAYER" /t REG_SZ /v "~ DISABLEDXMAXIMIZEDWINDOWEDMODE" /f >nul 2>&1
 )
 
-echo Removing IRQ Priorities
+echo !INFO! Removing IRQ priorities
 for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /f "irq"^| findstr "IRQ"') do reg delete "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "%%i" /f >nul 2>&1
 
-echo Enabling MSI mode for PCI devices except sound
+echo !INFO! Enabling MSI mode for PCI devices
 for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /l "PCI\VEN_"') do reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
 for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /l "PCI\VEN_"') do reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
 for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /l "PCI\VEN_"') do reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
 for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /l "PCI\VEN_"') do reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
-for /f %%i in ('wmic path Win32_SoundDevice get PNPDeviceID^| findstr /l "PCI\VEN_"') do reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Removing Devices Priority
+echo !INFO! Removing devices priority
 for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "Affinity Policy"^| findstr /l "PCI\VEN_"') do reg delete "%%i" /v "DevicePriority" /f >nul 2>&1
 
-echo Enabling hardware accelerated GPU scheduling in the DirectX Graphics Kernel
+echo !INFO! Enabling hardware accelerated GPU scheduling in the DirectX Graphics kernel
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d "2" /f >nul 2>&1
 
-echo Force contiguous memory allocation in the DirectX Graphics Kernel
+echo !INFO! Force contiguous memory allocation in the DirectX Graphics kernel
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DpiMapIommuContiguous" /t REG_DWORD /d "1" /f >nul 2>&1
 
 if "!GPU!"=="NVIDIA" (
-    echo Applying Nvidia GPU tweaks
+    echo !INFO! Applying Nvidia GPU tweaks
     for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" /s /v "DriverDesc"^| findstr "HKEY NVIDIA"') do if /i "%%i" neq "DriverDesc" (set "REGPATH_NVIDIA=%%i") else (
         if "!POWER_SAVING!"=="OFF" (
             reg add "!REGPATH_NVIDIA!" /v "PerfLevelSrc" /t REG_DWORD /d "8738" /f
@@ -416,18 +416,18 @@ if "!GPU!"=="NVIDIA" (
         reg add "!REGPATH_NVIDIA!" /v "PreferSystemMemoryContiguous" /t REG_DWORD /d "1" /f
     ) >nul 2>&1
 
-    echo Disabling Nvidia Telemetry
+    echo !INFO! Disabling Nvidia telemetry
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\NvTelemetryContainer" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\NVIDIA Corporation\NVControlPanel2\Client" /v "OptInOrOutPreference" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (NvTmMon NvTmRep NvProfile) do for /f "tokens=1 delims=," %%a in ('schtasks /query /fo csv^| findstr /v "TaskName"^| findstr "%%~i"') do schtasks /change /tn "%%a" /disable >nul 2>&1
 
-    echo Importing Nvidia profile
+    echo !INFO! Importing Nvidia profile
     taskkill /f /im "nvcplui.exe" >nul 2>&1
     start "" "resources\nvidiaProfileInspector.exe" "resources\BaseProfile.nip" -silentImport
 )
 
 if "!GPU!"=="AMD" (
-    echo Applying AMD GPU tweaks
+    echo !INFO! Applying AMD GPU tweaks
     for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" /s /v "DriverDesc"^| findstr "HKEY AMD ATI"') do if /i "%%i" neq "DriverDesc" (set "REGPATH_AMD=%%i") else (
         if "!POWER_SAVING!"=="OFF" (
             reg add "!REGPATH_AMD!" /v "AsicOnLowPower" /t REG_DWORD /d "0" /f
@@ -466,12 +466,12 @@ if "!GPU!"=="AMD" (
         reg add "!REGPATH_AMD!\UMD" /v "TFQ" /t REG_BINARY /d "3200" /f
     ) >nul 2>&1
 
-    echo Disabling AMD logging service
+    echo !INFO! Disabling AMD logging service
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\amdlog" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 
 if "!GPU!"=="INTEL" (
-    echo Applying Intel iGPU Tweaks
+    echo !INFO! Applying Intel iGPU tweaks
     for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" /s /v "DriverDesc"^| findstr "HKEY Intel"') do if /i "%%i" neq "DriverDesc" (set "REGPATH_INTEL=%%i") else (
         reg add "!REGPATH_INTEL!" /v "Disable_OverlayDSQualityEnhancement" /t REG_DWORD /d "1" /f
         reg add "!REGPATH_INTEL!" /v "IncreaseFixedSegment" /t REG_DWORD /d "1" /f
@@ -485,10 +485,10 @@ if "!GPU!"=="INTEL" (
     ) >nul 2>&1
 )
 
-call "modules\choicebox.exe" "Remove OneDrive;Remove Microsoft Store;Remove Xbox apps;Disable Windows Search;Disable Themes management;Disable Push Notifiactions and Action Center;Disable Task Scheduler;Disable Diagnostics;Disable Windows Update;Disable Wi-Fi support;Disable Bluetooth support;Disable Printer support;Disable VPN support;Disable Bitlocker support;Disable QoS support;Disable Files and Printers share support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
+call "modules\choicebox.exe" "Remove OneDrive;Remove Microsoft Store;Remove Xbox apps;Disable Windows search;Disable themes management;Disable push notifiactions and action center;Disable Task Scheduler;Disable diagnostics;Disable Windows Update;Disable Wi-Fi support;Disable bluetooth support;Disable printer support;Disable VPN support;Disable Bitlocker support;Disable QoS support;Disable files and printers share support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
 findstr /c:"Remove OneDrive" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Remove OneDrive
+    echo !INFO! Remove OneDrive
     taskkill /f /im "OneDrive.exe" >nul 2>&1
     if exist "%WinDir%\System32\OneDriveSetup.exe" start /wait "%WinDir%\System32\OneDriveSetup.exe" /uninstall >nul 2>&1
     if exist "%WinDir%\SysWOW64\OneDriveSetup.exe" start /wait "%WinDir%\SysWOW64\OneDriveSetup.exe" /uninstall >nul 2>&1
@@ -503,7 +503,7 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Remove Microsoft Store" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Microsoft Store
+    echo !INFO! Removing Microsoft Store
     for %%i in (iphlpsvc ClipSVC AppXSvc LicenseManager TokenBroker WalletService) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
@@ -513,16 +513,16 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Remove Xbox apps" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Xbox apps
+    echo !INFO! Removing Xbox apps
     for %%i in (XblGameSave XblAuthManager XboxNetApiSvc XboxGipSvc xbgm) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
     call:POWERSHELL "$AppxPackages = @(\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\");foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -Name $AppxPackage -AllUsers | Remove-AppxPackage -AllUsers}"
 )
-findstr /c:"Disable Windows Search" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable Windows search" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Search
+    echo !INFO! Disabling Windows search
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wsearch" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" (
         taskkill /f /im "SearchUI.exe"
@@ -533,27 +533,27 @@ if !ERRORLEVEL! equ 0 (
         move "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy.backup"
     ) >nul 2>&1
 )
-findstr /c:"Disable Themes management" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable themes management" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Themes management
+    echo !INFO! Disabling themes management
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Themes" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable Push Notifiactions and Action Center" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable push notifiactions and action center" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Push Notifiactions and Action Center
+    echo !INFO! Disabling push notifiactions and action center
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WpnUserService" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications" /v "ToastEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableNotificationCenter" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable Task Scheduler" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Task Scheduler
+    echo !INFO! Disabling task scheduler
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Schedule" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable Diagnostics" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable diagnostics" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Diagnostics
+    echo !INFO! Disabling diagnostics
     for %%i in (diagsvc DPS WdiServiceHost WdiSystemHost) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
@@ -561,7 +561,7 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable Windows Update" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Update
+    echo !INFO! Disabling Windows Update
     for %%i in (wuauserv WaaSMedicSvc PeerDistSvc UsoSvc BITS CryptSvc) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
@@ -569,28 +569,26 @@ if !ERRORLEVEL! equ 0 (
 ) else set "WIN_UPDATE=ENABLED"
 findstr /c:"Disable Wi-Fi support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Wi-Fi support
-    for %%i in (WwanSvc WlanSvc wcncsvc vwififlt vwifibus NativeWifiP Ndisuio) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
+    echo !INFO! Disabling Wi-Fi support
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\vwififlt" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable Bluetooth support" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable bluetooth support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Bluetooth support
+    echo !INFO! Disabling bluetooth support
     for %%i in (BTAGService bthserv BthAvctpSvc NaturalAuthentication BluetoothUserService CDPUserSvc) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
-findstr /c:"Disable Printer support" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable printer support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Printer support
+    echo !INFO! Disabling printer support
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Spooler" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
 findstr /c:"Disable VPN support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling VPN support
+    echo !INFO! Disabling VPN support
     for %%i in (IKEEXT WinHttpAutoProxySvc RasMan SstpSvc iphlpsvc NdisVirtualBus Eaphost) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
@@ -598,7 +596,7 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable Bitlocker support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling bitlocker support
+    echo !INFO! Disabling Bitlocker support
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_MULTI_SZ /d "" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\fvevol" /v "ErrorControl" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\fvevol" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
@@ -606,13 +604,13 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable QoS support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling QoS support
+    echo !INFO! Disabling QoS support
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Psched" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_pacer"
 )
-findstr /c:"Disable Files and Printers share support" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable files and printers share support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Files and Printers share support
+    echo !INFO! Disabling files and printers share support
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     call:POWERSHELL "Disable-NetAdapterBinding -Name \"*\" -ComponentID ms_server"
@@ -622,57 +620,57 @@ del /f /q "%TMP%\services.txt" >nul 2>&1
 
 if "!WIN_UPDATE!"=="ENABLED" (
     call "modules\choicebox.exe" "Disable Windows auto update;Disable Windows update auto restart;Prevent malicious software removal tool from installing" "Here you can configure Windows Update" "Windows Update" /C:1 >"%TMP%\update.txt"
-    findstr /c:"Disable Windows auto update" "%TMP%\security.txt" >nul 2>&1
+    findstr /c:"Disable Windows auto update" "%TMP%\update.txt" >nul 2>&1
     if !ERRORLEVEL! equ 0 (
-        echo Disabling Windows auto update
+        echo !INFO! Disabling Windows auto update
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoUpdate" /t REG_DWORD /d "1" /f >nul 2>&1
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "AUOptions" /t REG_DWORD /d "2" /f >nul 2>&1
     )
-    findstr /c:"Disable Windows update auto restart" "%TMP%\security.txt" >nul 2>&1
+    findstr /c:"Disable Windows update auto restart" "%TMP%\update.txt" >nul 2>&1
     if !ERRORLEVEL! equ 0 (
-        echo Disabling Windows update auto restart
+        echo !INFO! Disabling Windows update auto restart
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoRebootWithLoggedOnUsers" /t REG_DWORD /d "1" /f >nul 2>&1
     )
-    findstr /c:"Prevent malicious software removal tool from installing" "%TMP%\security.txt" >nul 2>&1
+    findstr /c:"Prevent malicious software removal tool from installing" "%TMP%\update.txt" >nul 2>&1
     if !ERRORLEVEL! equ 0 (
-        echo Preventing malicious software removal tool from installing
+        echo !INFO! Preventing malicious software removal tool from installing
         reg add "HKLM\SOFTWARE\Policies\Microsoft\MRT" /v "DontOfferThroughWUAU" /t REG_DWORD /d "1" /f >nul 2>&1
     )
     del /f /q "%TMP%\update.txt" >nul 2>&1
 )
 
-echo Cleanning non-present devices
+echo !INFO! Cleanning non-present devices
 call:POWERSHEll "$Devices = Get-PnpDevice | ? Status -eq Unknown;foreach ($Device in $Devices) { &\"pnputil\" /remove-device $Device.InstanceId }"
 
-echo Disabling HPET
+echo !INFO! Disabling HPET
 bcdedit /deletevalue useplatformclock >nul 2>&1
 bcdedit /set disabledynamictick Yes >nul 2>&1
 call:POWERSHELL "Get-PnpDevice | Where-Object { $_.InstanceId -like 'ACPI\PNP0103\2&daba3ff&1' } | Disable-PnpDevice -Confirm:$false"
 
-echo Disabling synthetic timer
+echo !INFO! Disabling synthetic timer
 bcdedit /set useplatformtick Yes >nul 2>&1
 
 call:MSGBOX "Would you like to install Timer Resolution Service ?\n\nChange your Windows timer resolution to 0.5ms to improve performance and responsiveness for games and peripherals." vbYesNo+vbQuestion "Timer Resolution"
 if !ERRORLEVEL! equ 6 (
     if "!VC!"=="NOT_INSTALLED" call:CHOCO vcredist-all
-    echo Installing Timer Resolution Service
+    echo !INFO! Installing Timer Resolution Service
     if not exist "%WinDir%\SetTimerResolutionService.exe" copy "resources\SetTimerResolutionService.exe" "%WinDir%" >nul 2>&1
     call "%WinDir%\SetTimerResolutionService.exe" -Install >nul 2>&1
 )
 
-call:MSGBOX "Would you like to remove all non-essential Microsoft Store Apps ?" vbYesNo+vbQuestion "Bloatware"
+call:MSGBOX "Would you like to remove all non-essential Microsoft Store apps ?" vbYesNo+vbQuestion "Bloatware"
 if !ERRORLEVEL! equ 6 (
-    echo Removing Windows bloatware
+    echo !INFO! Removing Microsoft Store bloatware
     call:POWERSHELL "$ExcludedAppxPackages = @(\"Microsoft.DesktopAppInstaller\",\"Microsoft.WindowsStore\",\"Microsoft.StorePurchaseApp\",\"Microsoft.WindowsNotepad\",\"Microsoft.WindowsTerminal\",\"Microsoft.WindowsTerminalPreview\",\"Microsoft.WebMediaExtensions\",\"Microsoft.WindowsCamera\",\"Microsoft.WindowsCalculator\",\"Microsoft.Windows.Photos\",\"Microsoft.Photos.MediaEngineDLC\",\"Microsoft.HEVCVideoExtension\",\"Microsoft.ScreenSketch\",\"Microsoft.Windows.CapturePicker\",\"Microsoft.Paint\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\",\"AppUp.IntelGraphicsControlPanel\",\"AppUp.IntelGraphicsExperience\",\"NVIDIACorp.NVIDIAControlPanel\",\"AdvancedMicroDevicesInc-2.AMDRadeonSoftware\",\"RealtekSemiconductorCorp.RealtekAudioControl\");$AppxPackages = (Get-AppxPackage -PackageTypeFilter Bundle -AllUsers).Name | Select-String $ExcludedAppxPackages -NotMatch;foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -PackageTypeFilter Bundle -AllUsers | Where-Object -FilterScript {$_.Name -cmatch $AppxPackage} | Remove-AppxPackage -AllUsers}"
 )
 
 call:MSGBOX "Would you like to apply network tweaks ?\n\nEssentially based on speedguide.net" vbYesNo+vbQuestion "Network"
 if !ERRORLEVEL! equ 6 (
-    echo Applying network tweaks
+    echo !INFO! Applying network tweaks
     if "!NIC_TYPE!"=="WIFI" (netsh int tcp set supplemental internet congestionprovider=newreno >nul 2>&1) else netsh int tcp set supplemental internet congestionprovider=CUBIC >nul 2>&1
     call:MSGBOX "Would you like to disable network autotuning ?\n\nCan reduce bufferbloat, but it can significantly decrease your network speed." vbYesNo+vbQuestion "Network"
     if !ERRORLEVEL! equ 6 (
-        echo Disabling Network Autotuning
+        echo !INFO! Disabling network Autotuning
         netsh int tcp set global autotuninglevel=disabled >nul 2>&1
     ) else netsh int tcp set global autotuninglevel=normal >nul 2>&1
     netsh int tcp set global ecncapability=disabled >nul 2>&1
@@ -706,7 +704,7 @@ if !ERRORLEVEL! equ 6 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "NetbtPriority" /t REG_DWORD /d "7" /f >nul 2>&1
     call:MSGBOX "Would you like to disable Nagle's Algorithm ?\n\nDisabling nagling can reduce latency/ping in some games.\nKeep in mind that disabling Nagle's algorithm may also have some negative effect on file transfers." vbYesNo+vbQuestion "Network"
     if !ERRORLEVEL! equ 6 (
-        echo Disabling Nagle's Algorithm
+        echo !INFO! Disabling Nagle's Algorithm
         for /f %%i in ('wmic path win32_networkadapter get GUID^| findstr "{"') do (
             reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpAckFrequency" /t REG_DWORD /d "1" /f
             reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%i" /v "TcpDelAckTicks" /t REG_DWORD /d "0" /f
@@ -718,7 +716,7 @@ if !ERRORLEVEL! equ 6 (
 
     call:MSGBOX "Would you like to optimize your NICs ?\n\nWill set best settings to ensure maximum performance (throughput and latency stability)" vbYesNo+vbQuestion "Network"
     if !ERRORLEVEL! equ 6 (
-        echo Applying NIC settings
+        echo !INFO! Applying NICs settings
         if "!POWER_SAVING!"=="OFF" (
             call:NIC_SETTINGS "PnPCapabilities" "24"
             call:NIC_SETTINGS "PowerDownPll" "0"
@@ -820,7 +818,7 @@ if !ERRORLEVEL! equ 6 (
         if "!NIC_TYPE!"=="WIFI" (
             call:MSGBOX "Would you like to disable Wi-Fi background scanning ?\n\nDisabling the Wi-Fi background scanning can improves latency.\nIt's not recommended if you have a very bad Wi-Fi signal strength ! " vbYesNo+vbQuestion "Network"
             if !ERRORLEVEL! equ 6 (
-                echo Disabling Wi-Fi background scanning
+                echo !INFO! Disabling Wi-Fi background scanning
                 call:NIC_SETTINGS "RegROAMSensitiveLevel" "127"
                 call:NIC_SETTINGS "RoamAggressiveness" "0"
                 call:NIC_SETTINGS "RoamTrigger" "1"
@@ -838,69 +836,69 @@ if !ERRORLEVEL! equ 6 (
     )
 )
 
-call "modules\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable Storage Sense;Disable WiFi Sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable Windows Keylogger;Disable application compatability telemetry;Disable license checking;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Cortana;Disable Windows Customer Experience Improvement Program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
+call "modules\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable storage sense;Disable WiFi sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable Windows keylogger;Disable application compatibility telemetry;Disable license checking;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Cortana;Disable Windows customer experience improvement program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
 findstr /c:"Disable privacy settings experience at sign-in" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling privacy settings experience at sign-in
+    echo !INFO! Disabling privacy settings experience at sign-in
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OOBE" /v "DisablePrivacyExperience" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable app launch tracking" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disable app launch tracking
+    echo !INFO! Disabling app launch tracking
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackProgs" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disabling Windows feedback" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disable Windows feedback
+    echo !INFO! Disabling Windows feedback
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Siuf\Rules" /v "NumberOfSIUFInPeriod" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Siuf\Rules" /v "PeriodInNanoSeconds" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable pen feedback" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling pen feedback
+    echo !INFO! Disabling pen feedback
     reg add "HKLM\SOFTWARE\Policies\Microsoft\TabletPC" /v "TurnOffPenFeedback" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable PenWorkspace ads" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling PenWorkspace ads
+    echo !INFO! Disabling PenWorkspace ads
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\PenWorkspace" /v "PenWorkspaceAppSuggestionsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable bluetooth ads" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling bluetooth ads
+    echo !INFO! Disabling bluetooth ads
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Bluetooth" /v "AllowAdvertising" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable tailored experiences with diagnostic data" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling tailored experiences with diagnostic data
+    echo !INFO! Disabling tailored experiences with diagnostic data
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable shared experiences" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling shared experiences
+    echo !INFO! Disabling shared experiences
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v "RomeSdkChannelUserAuthzPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable Windows Spotlight" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Spotlight
+    echo !INFO! Disabling Windows Spotlight
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsSpotlightFeatures" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable automatic apps installation" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling automatic apps installation
+    echo !INFO! Disabling automatic apps installation
     for %%i in (ContentDeliveryAllowed OemPreInstalledAppsEnabled PreInstalledAppsEnabled PreInstalledAppsEverEnabled SilentInstalledAppsEnabled) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable welcome exeriences" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable welcome experiences" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling welcome exeriences
+    echo !INFO! Disabling welcome experiences
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-310093Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable tips, tricks and suggestions" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling tips, tricks and suggestions
+    echo !INFO! Disabling tips, tricks and suggestions
     for %%i in (SubscribedContent-314559Enabled SubscribedContent-338387Enabled SubscribedContent-338388Enabled SubscribedContent-338389Enabled
         SubscribedContent-338393Enabled SubscribedContent-353694Enabled SubscribedContent-353696Enabled SubscribedContent-314563Enabled
         SubscribedContent-353698Enabled SystemPaneSuggestionsEnabled SoftLandingEnabled FeatureManagementEnabled) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -910,24 +908,24 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable metadata tracking" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing metadata tracking
+    echo !INFO! Removing metadata tracking
     reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata" /f >nul 2>&1
 )
-findstr /c:"Disable Storage Sense" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable storage sense" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Storage Sense
+    echo !INFO! Removing storage sense
     reg delete "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense" /f >nul 2>&1
 )
-findstr /c:"Disable WiFi Sense" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable WiFi sense" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling WiFi Sense
+    echo !INFO! Disabling WiFi sense
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v "AutoConnectAllowedOEM" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable error reporting" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling error reporting
+    echo !INFO! Disabling error reporting
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WerSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wercplsupport" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" /v "DoReport" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -936,39 +934,39 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable advertising ID" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling advertising ID
+    echo !INFO! Disabling advertising ID
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" /v "DisabledByGroupPolicy" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable data collection" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling data collection
+    echo !INFO! Disabling data collection
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowTelemetry" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "LimitEnhancedDiagnosticDataWindowsAnalytics" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\diagnosticshub.standardcollector.service" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable Windows Keylogger" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable Windows keylogger" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Keylogger
+    echo !INFO! Disabling Windows keylogger
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable application compatability telemetry" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable application compatibility telemetry" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling application compatability telemetry
+    echo !INFO! Disabling application compatibility telemetry
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "AITEnable" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "DisableInventory" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable license checking" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling license checking
+    echo !INFO! Disabling license checking
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "NoGenTicket" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "AllowWindowsEntitlementReactivation" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable inking and typing data collection" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling inking and typing data collection
+    echo !INFO! Disabling inking and typing data collection
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Input\TIPC" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -978,7 +976,7 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable Windows Defender reporting" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Defender reporting
+    echo !INFO! Disabling Windows Defender reporting
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting" /v "DisableGenericRePorts" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v "LocalSettingOverrideSpynetReporting" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v "SpynetReporting" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -987,30 +985,30 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Disable timeline activity history" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling timeline activity history
+    echo !INFO! Disabling timeline activity history
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "PublishUserActivities" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "UploadUserActivities" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable Cortana" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Cortana
+    echo !INFO! Disabling Cortana
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable Windows Customer Experience Improvement Program" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable Windows customer experience improvement program" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Customer Experience Improvement Program
+    echo !INFO! Disabling Windows customer experience improvement program
     reg add "HKLM\SOFTWARE\Policies\Microsoft\SQMClient\Windows" /v "CEIPEnable" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\SQMClient" /v "CorporateSQMURL" /t REG_SZ /d "0.0.0.0" /f >nul 2>&1
 )
 findstr /c:"Disable autoLogger" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling autoLogger
+    echo !INFO! Disabling autoLogger
     for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\WMI\AutoLogger" /s /f "start"^| findstr "HKEY"') do reg add "%%i" /v "Start" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable unnecessary scheduled tasks" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling unnecessary scheduled tasks
+    echo !INFO! Disabling unnecessary scheduled tasks
     for %%i in ("Application Experience\Microsoft Compatibility Appraiser" "Application Experience\ProgramDataUpdater"
         "Application Experience\StartupAppTask" "Customer Experience Improvement Program\Consolidator"
         "Customer Experience Improvement Program\KernelCeipTask" "Customer Experience Improvement Program\UsbCeip"
@@ -1019,10 +1017,10 @@ if !ERRORLEVEL! equ 0 (
 )
 del /f /q "%TMP%\privacy.txt" >nul 2>&1
 
-call "modules\choicebox.exe" "Disable Autoplay and Autorun;Disable NetBIOS;Disable Remote Assistance;Disable Remote Access;Disable LLMNR;Disable Windows Browser Protocol;Disable WPAD;Disable WDigest;Disable Windows Scripting Host;Harden SMB;Block Untrusted Fonts" "Here you can secure your system against threats" "Hardenning" /C:2 >"%TMP%\hardenning.txt"
-findstr /c:"Disable Autoplay and Autorun" "%TMP%\hardenning.txt" >nul 2>&1
+call "modules\choicebox.exe" "Disable autoplay and autorun;Disable NetBIOS;Disable remote assistance;Disable remote access;Disable LLMNR;Disable Windows browser protocol;Disable WPAD;Disable WDigest;Disable Windows Scripting Host;Harden SMB;Block untrusted fonts" "Here you can secure your system against threats" "hardening" /C:2 >"%TMP%\hardening.txt"
+findstr /c:"Disable autoplay and autorun" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Autoplay and Autorun
+    echo !INFO! Disabling autoplay and autorun
     reg add "HKLM\SOFTWARE\Microsoft\Internet Explorer\Main" /v "Autorun" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutorun" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoplayfornonVolume" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -1030,58 +1028,58 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "DontSetAutoplayCheckbox" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable NetBIOS" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable NetBIOS" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling NetBIOS
+    echo !INFO! Disabling NetBIOS
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\NetBT" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\NetBIOS" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\lmhosts" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces" /s /f "NetbiosOptions"^| findstr "HKEY"') do reg add "%%i" /v "NetbiosOptions" /t REG_DWORD /d "2" /f >nul 2>&1
 )
-findstr /c:"Disable Remote Assistance" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable remote assistance" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Remote Assistance
+    echo !INFO! Disabling remote assistance
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable Remote Access" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable remote access" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Remote Access
+    echo !INFO! Disabling remote access
     for %%i in (RasAuto RasMan SessionEnv TermService UmRdpService RpcLocator) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
 )
-findstr /c:"Disable LLMNR" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable LLMNR" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling LLMNR
+    echo !INFO! Disabling LLMNR
     reg add "HKLM\SOFTWARE\policies\Microsoft\Windows NT\DNSClient" /v "EnableMulticast" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable Windows Browser Protocol" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable Windows browser protocol" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Browser Protocol
+    echo !INFO! Disabling Windows browser protocol
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Browser" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable WPAD" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable WPAD" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling WPAD
+    echo !INFO! Disabling WPAD
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad" /v "WpadOverride" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable WDigest" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable WDigest" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling WDigest
+    echo !INFO! Disabling WDigest
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\Wdigest" /v "UseLogonCredential" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable Windows Scripting Host" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Disable Windows Scripting Host" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Windows Scripting Host
-    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "RunScript" /t REG_SZ /d "%SystemRoot%\System32\cmd.exe /c reg add \"HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings\" /v \"Enabled\" /t REG_DWORD /d \"0\" /f" /f >nul 2>&1
+    echo !INFO! Disabling WSH
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "RunScript" /t REG_SZ /d "cmd.exe /c reg add \"HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings\" /v \"Enabled\" /t REG_DWORD /d \"0\" /f" /f >nul 2>&1
 )
-findstr /c:"Harden SMB" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Harden SMB" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hardening SMB
+    echo !INFO! Hardening SMB
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RestrictAnonymous" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RestrictAnonymousSAM" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "EveryoneIncludesAnonymous" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -1095,228 +1093,228 @@ if !ERRORLEVEL! equ 0 (
     call:POWERSHELL "Set-SmbServerConfiguration -EncryptData $True -Force"
     call:POWERSHELL "Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force"
 )
-findstr /c:"Block Untrusted Fonts" "%TMP%\hardenning.txt" >nul 2>&1
+findstr /c:"Block untrusted fonts" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Blocking Untrusted Fonts
+    echo !INFO! Blocking untrusted fonts
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" /v "MitigationOptions_FontBocking" /t REG_QWORD /d "1000000000000" /f >nul 2>&1
 )
-del /f /q "%TMP%\hardenning.txt" >nul 2>&1
+del /f /q "%TMP%\hardening.txt" >nul 2>&1
 
-echo Disabling Bing from Windows Search
+echo !INFO! Disabling Bing from Windows search
 reg add "HKU\!USER_SID!\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Show BSOD details instead of the sad smiley
+echo !INFO! Show BSOD details instead of the sad smiley
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\CrashControl" /v "DisplayParameters" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Disabling first sign-in animation
+echo !INFO! Disabling first sign-in animation
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableFirstLogonAnimation" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v "EnableFirstLogonAnimation" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Display highly detailed status messages
+echo !INFO! Display highly detailed status messages
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "VerboseStatus" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Disabling balloon tips
+echo !INFO! Disabling balloon tips
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "EnableBalloonTips" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "StartButtonBalloonTip" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "FolderContentsInfoTip" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowInfoTip" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Control Panel View always small icons
+echo !INFO! Control panel view always small icons
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel" /v "AllItemsIconView" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel" /v "StartupPage" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Improving the quality of the imported desktop Wallpaper
+echo !INFO! Improving the quality of the imported desktop Wallpaper
 reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "JPEGImportQuality" /t REG_DWORD /d "100" /f >nul 2>&1
 
-echo Open file explorer to ^'This PC^'
+echo !INFO! Open file explorer to ^'This PC^'
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "LaunchTo" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Reducing menu show delay time
+echo !INFO! Reducing menu show delay time
 reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f >nul 2>&1
 
-echo Disabling low disk space alerts
+echo !INFO! Disabling low disk space alerts
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoLowDiskSpaceChecks" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Explorer shortcuts
+echo !INFO! Explorer shortcuts
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "LinkResolveIgnoreLinkInfo" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoResolveSearch" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoResolveTrack" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Disabling online content in Explorer
+echo !INFO! Disabling online content in Explorer
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "AllowOnlineTips" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInternetOpenWith" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoOnlinePrintsWizard" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoPublishingWizard" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoWebServices" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo Disabling Recent Items and Frequent Places in Explorer
+echo !INFO! Disabling recent items and frequent places in explorer
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackDocs" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoRecentDocsHistory" /d "1" /t REG_DWORD /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "ClearRecentDocsOnExit" /d "1" /t REG_DWORD /f >nul 2>&1
 
-echo Hiding recently and frequently used folders in quick access
+echo !INFO! Hiding recently and frequently used folders in quick access
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowRecent" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowFrequent" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Static Scroll Bars
+echo !INFO! Static scroll bars
 reg add "HKU\!USER_SID!\Control Panel\Accessibility" /v "DynamicScrollbars" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo Disabling user tracking (recent run)
+echo !INFO! Disabling user tracking (recent run)
 reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInstrumentation" /d "1" /t REG_DWORD /f >nul 2>&1
 
-call "modules\choicebox.exe" "Remove 3D Objects from File Explorer;Remove Library from File Explorer;Remove Favorites from File Explorer;Remove Family Group from File Explorer;Remove Network from File Explorer;Remove OneDrive from File Explorer;Remove Quick Access from File Explorer;Remove All Folders in 'This PC' from File Explorer;Hide Search Box from Taskbar;Hide Task View from Taskbar;Hide People from Taskbar;Hide Windows Ink Workspace from Taskbar;Hide Meet Now from Taskbar;Hide News and Interests from Taskbar;Hide Windows Defender from Taskbar;Hide Cortana from Taskbar;Enable Small Icons in Taskbar;Show All Tray Icons on Taskbar;Show Seconds on Taskbar Clock;Hide Recently Added Apps in Start Menu;Hide Most Used Apps in Start Menu;Unpin all Start Menu tiles;Increase Taskbar Transparency Level;Disable Transparency Effect Theme;Enable Dark Mode Theme;Set Desktop Background to Solid Color;Remove mouse scheme;Adjust visual effects to best performance;Disable Lock Screen;Reduce Size of Buttons Close Minimize Maximize;Disable Delete Confirmation Box for Recycle Bin;Show File Extensions;Show Hidden Folders;Disable Shortcut Name Extension;Add Take Ownership to Context Menu;Add Classic Personalize Context Menu;Restore Classic Windows Photo Viewer;Enable Classic Volume Control;Enable Classic Alt Tab;Enable Windows 8 Network Flayout;Disable Boot Graphics;Enable F8 Boot Menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
-findstr /c:"Remove 3D Objects from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+call "modules\choicebox.exe" "Remove 3D Objects from file explorer;Remove Library from file explorer;Remove Favorites from file explorer;Remove Family Group from file explorer;Remove Network from file explorer;Remove OneDrive from file explorer;Remove Quick Access from file explorer;Remove all folders in 'This PC' from file explorer;Hide Search box from taskbar;Hide Task view from taskbar;Hide People from taskbar;Hide Windows Ink Workspace from taskbar;Hide Meet Now from taskbar;Hide News and Interests from taskbar;Hide Windows Defender from taskbar;Hide Cortana from taskbar;Enable small icons in taskbar;Show all tray icons on taskbar;Show seconds on taskbar clock;Hide recently added apps in start menu;Hide most used apps in start menu;Unpin all start menu tiles;Increase taskbar transparency level;Disable transparency effect theme;Enable dark mode theme;Set desktop background to solid color;Remove mouse scheme;Adjust visual effects to best performance;Disable lock screen;Reduce size of buttons close mnimize maximize;Disable delete confirmation box for recycle Bin;Show file extensions;Show hidden folders;Disable shortcut name extension;Add Take Ownership to context menu;Add classic personalize to context menu;Restore classic windows photo viewer;Enable classic volume control;Enable classic alt tab;Enable Windows 8 network flayout;Disable Boot graphics;Enable F8 Boot menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
+findstr /c:"Remove 3D Objects from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing 3D Objects from File Explorer
+    echo !INFO! Removing 3D Objects from file explorer
     reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}" /f >nul 2>&1
     reg delete "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}" /f >nul 2>&1
 )
-findstr /c:"Remove Library from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Remove Library from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Library from File Explorer
+    echo !INFO! Removing Library from file explorer
     reg add "HKCR\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2962227469" /f >nul 2>&1
     reg add "HKCR\WOW6432Node\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2962227469" /f >nul 2>&1
 )
-findstr /c:"Remove Favorites from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Remove Favorites from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Favorites from File Explorer
+    echo !INFO! Removing Favorites from file explorer
     reg add "HKCR\CLSID\{323CA680-C24D-4099-B94D-446DD2D7249E}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2696937728" /f >nul 2>&1
     reg add "HKCR\WOW6432Node\CLSID\{323CA680-C24D-4099-B94D-446DD2D7249E}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2696937728" /f >nul 2>&1
 )
-findstr /c:"Remove Family Group from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Remove Family Group from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Family Group from File Explorer
+    echo !INFO! Removing Family Group from file explorer
     reg add "HKCR\CLSID\{B4FB3F98-C1EA-428d-A78A-D1F5659CBA93}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2962489612" /f >nul 2>&1
     reg add "HKCR\WOW6432Node\CLSID\{B4FB3F98-C1EA-428d-A78A-D1F5659CBA93}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2962489612" /f >nul 2>&1
 )
-findstr /c:"Remove Network from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Remove Network from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Network from File Explorer
+    echo !INFO! Removing Network from file explorer
     reg add "HKCR\CLSID\{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2954100836" /f >nul 2>&1
     reg add "HKCR\WOW6432Node\CLSID\{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2954100836" /f >nul 2>&1
 )
-findstr /c:"Remove OneDrive from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Remove OneDrive from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing OneDrive from File Explorer
+    echo !INFO! Removing OneDrive from file explorer
     reg add "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}\ShellFolder" /v "Attributes" /t REG_DWORD /d "4035969101" /f >nul 2>&1
     reg add "HKCR\WOW6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}\ShellFolder" /v "Attributes" /t REG_DWORD /d "4035969101" /f >nul 2>&1
 )
-findstr /c:"Remove Quick Access from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Remove Quick Access from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing Quick Access from File Explorer
+    echo !INFO! Removing Quick Access from file explorer
     reg add "HKCR\CLSID\{679f85cb-0220-4080-b29b-5540cc05aab6}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2689597440" /f >nul 2>&1
     reg add "HKCR\WOW6432Node\CLSID\{679f85cb-0220-4080-b29b-5540cc05aab6}\ShellFolder" /v "Attributes" /t REG_DWORD /d "2689597440" /f >nul 2>&1
 )
-findstr /c:"Remove All Folders in 'This PC' from File Explorer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Remove all folders in 'This PC' from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing All Folders in ^'This PC^' from File Explorer
+    echo !INFO! Removing all folders in ^'This PC^' from file explorer
     for %%i in (088e3905-0323-4b02-9826-5d99428e115f 1CF1260C-4DD0-4ebb-811F-33C572699FDE 24ad3ad4-a569-4530-98e1-ab02f9417aa8 374DE290-123F-4565-9164-39C4925E467B
         3ADD1653-EB32-4cb0-BBD7-DFA0ABB5ACCA 3dfdf296-dbec-4fb4-81d1-6a3438bcf4de A0953C92-50DC-43bf-BE83-3742FED03C9C A8CDFF1C-4878-43be-B5FD-F8091C1C60D0
         B4BFCC3A-DB2C-424C-B029-7FE99A87C641 d3162b92-9365-467a-956b-92703aca08af f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a 0DB7E03F-FC29-4DC6-9020-FF41B59E513A) do reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{%%i}" /f >nul 2>&1
 )
-findstr /c:"Hide Search Box from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide Search box from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Search Box from Taskbar
+    echo !INFO! Hiding Search box from taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Hide Task View from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide Task view from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Task View from Taskbar
+    echo !INFO! Hiding Task view from taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Hide People from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide People from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding People from Taskbar
+    echo !INFO! Hiding People from taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" /v "PeopleBand" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Hide Windows Ink Workspace from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide Windows Ink Workspace from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Windows Ink Workspace from Taskbar
+    echo !INFO! Hiding Windows Ink Workspace from taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\PenWorkspace" /v "PenWorkspaceButtonDesiredVisibility" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Hide Meet Now from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide Meet Now from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Meet Now from Taskbar
+    echo !INFO! Hiding Meet Now from taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "HideSCAMeetNow" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Hide News and Interests from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide News and Interests from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding News and Interests from Taskbar
+    echo !INFO! Hiding News and Interests from taskbar
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" /v "EnableFeeds" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Hide Windows Defender from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide Windows Defender from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Windows Defender from Taskbar
+    echo !INFO! Hiding Windows Defender from taskbar
     reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "SecurityHealth" /f >nul 2>&1
 )
-findstr /c:"Hide Cortana from Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide Cortana from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Cortana from Taskbar
+    echo !INFO! Hiding Cortana from taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Enable Small Icons in Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Enable small icons in taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Enabling Small Icons in Taskbar
+    echo !INFO! Enabling small icons in taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarSmallIcons" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Show All Tray Icons on Taskbar" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Show all tray icons on taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Show All Tray Icons on Taskbar
+    echo !INFO! Show all tray icons on taskbar
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "EnableAutoTray" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Show Seconds on Taskbar Clock" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Show seconds on taskbar clock" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Show Seconds on Taskbar Clock
+    echo !INFO! Show seconds on taskbar clock
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowSecondsInSystemClock" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Hide Recently Added Apps in Start Menu" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide recently added apps in start menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Recently Added Apps in Start Menu
+    echo !INFO! Hiding recently added apps in start menu
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "HideRecentlyAddedApps" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Hide Most Used Apps in Start Menu" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Hide most used apps in start menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Hiding Most Used Apps in Start Menu
+    echo !INFO! Hiding most used apps in start menu
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "NoStartMenuMFUprogramsList" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Unpin all Start Menu tiles" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Unpin all start menu tiles" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Unpinning all Start Menu tiles
+    echo !INFO! Unpinning all start menu tiles
     for /f "tokens=*" %%i in ('reg query "HKU\!USER_SID!\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\Cache\DefaultAccount" /s /f "start.tilegrid"^| findstr "start.tilegrid"') do reg delete "%%i" /f >nul 2>&1
 )
-findstr /c:"Increase Taskbar Transparency Level" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Increase taskbar transparency level" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Increasing Taskbar Transparency Level
+    echo !INFO! Increasing taskbar transparency level
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "UseOLEDTaskbarTransparency" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable Transparency Effect Theme" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Disable transparency effect theme" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Transparency Effect Theme
+    echo !INFO! Disabling transparency effect theme
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableBlurBehind" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows" /v "DisableAcrylicBackgroundOnLogon" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Enable Dark Mode Theme" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Enable dark mode theme" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Enabling Dark Mode Theme
+    echo !INFO! Enabling dark mode theme
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "AppsUseLightTheme" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Set Desktop Background to Solid Color" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Set desktop background to solid color" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Setting Desktop Background to Solid Color
+    echo !INFO! Setting desktop background to solid color
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" /v "BackgroundType" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "Wallpaper" /t REG_SZ /d "" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Colors" /v "Background" /t REG_SZ /d "9 17 26" /f >nul 2>&1
 )
 findstr /c:"Disable Timeline" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Timeline
+    echo !INFO! Disabling Timeline
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "EnableActivityFeed" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Remove mouse scheme" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Removing mouse scheme
+    echo !INFO! Removing mouse scheme
     reg add "HKU\!USER_SID!\Control Panel\Cursors" /ve /t REG_SZ /d "" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "ContactVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "GestureVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -1328,7 +1326,7 @@ if !ERRORLEVEL! equ 0 (
 )
 findstr /c:"Adjust visual effects to best performance" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Setting Visual effects to performance
+    echo !INFO! Setting Visual effects to performance
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d "3" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "UserPreferencesMask" /t REG_BINARY /d "9012038010000000" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "FontSmoothing" /t REG_SZ /d "2" /f >nul 2>&1
@@ -1347,42 +1345,42 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DWM" /v "DisallowAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "TurnOffSPIAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable Lock Screen" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Disable lock screen" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Lock Screen
+    echo !INFO! Disabling lock screen
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "DisableLogonBackgroundImage" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\SessionData" /v "AllowLockScreen" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v "NoLockScreen" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Reduce Size of Buttons Close Minimize Maximize" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Reduce size of buttons close mnimize maximize" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Reducing Size of Buttons Close Minimize Maximize
+    echo !INFO! Reducing size of buttons close mnimize maximize
     reg add "HKU\!USER_SID!\Control Panel\Desktop\WindowMetrics" /v "CaptionWidth" /t REG_SZ /d "-270" /f >nul 2>&1
     reg add "HKU\!USER_SID!\Control Panel\Desktop\WindowMetrics" /v "CaptionHeight" /t REG_SZ /d "-270" /f >nul 2>&1
 )
-findstr /c:"Disable Delete Confirmation Box for Recycle Bin" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Disable delete confirmation box for recycle Bin" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Delete Confirmation Box for Recycle Bin
+    echo !INFO! Disabling delete confirmation box for recycle Bin
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "ConfirmFileDelete" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Show File Extensions" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Show file extensions" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Show File Extensions
+    echo !INFO! Show file extensions
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "HideFileExt" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Show Hidden Folders" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Show hidden folders" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Show Hidden Folders
+    echo !INFO! Show hidden folders
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Hidden" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Disable Shortcut Name Extension" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Disable shortcut name extension" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Shortcut Name Extension
+    echo !INFO! Disabling shortcut name extension
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "link" /t REG_BINARY /d "0" /f >nul 2>&1
 )
-findstr /c:"Add Take Ownership to Context Menu" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Add Take Ownership to context menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Adding Take Ownership to Context Menu
+    echo !INFO! Adding Take Ownership to context menu
     reg add "HKCR\*\shell\runas" /ve /t REG_SZ /d "Take ownership" /f >nul 2>&1
     reg add "HKCR\*\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f >nul 2>&1
     reg add "HKCR\*\shell\runas" /v "NoWorkingDirectory" /t REG_SZ /d "" /f >nul 2>&1
@@ -1394,9 +1392,9 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKCR\Directory\shell\runas\command" /ve /t REG_SZ /d "cmd.exe /c takeown /f \"%%1\" /r /d y && icacls \"%%1\" /grant administrators:F" /f >nul 2>&1
     reg add "HKCR\Directory\shell\runas\command" /v "IsolatedCommand" /t REG_SZ /d "cmd.exe /c takeown /f \"%%1\" /r /d y && icacls \"%%1\" /grant administrators:F" /f >nul 2>&1
 )
-findstr /c:"Add Classic Personalize Context Menu" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Add classic personalize to context menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Enabling Classic Personalize Context Menu
+    echo !INFO! Adding classic personalize to context menu
     reg delete "HKCR\DesktopBackground\Shell\Personalize" /f >nul 2>&1
     reg add "HKCR\DesktopBackground\Shell\Personalization" /v "Icon" /t REG_SZ /d "themecpl.dll" /f >nul 2>&1
     reg add "HKCR\DesktopBackground\Shell\Personalization" /v "MUIVerb" /t REG_SZ /d "Personalize" /f >nul 2>&1
@@ -1436,47 +1434,47 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKCR\DesktopBackground\Shell\Personalization\shell\010flyout" /v "MUIVerb" /t REG_SZ /d "System Icons" /f >nul 2>&1
     reg add "HKCR\DesktopBackground\Shell\Personalization\shell\010flyout\command" /ve /t REG_SZ /d "explorer shell:::{05d7b0f4-2121-4eff-bf6b-ed3f69b894d9} \SystemIcons,,0" /f >nul 2>&1
 )
-findstr /c:"Restore Classic Windows Photo Viewer" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Restore classic windows photo viewer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Restoring Classic Windows Photo Viewer
+    echo !INFO! Restoring classic windows photo viewer
     for %%i in (tif tiff bmp dib gif jfif jpe jpeg jpg jxr png) do (
         reg add "HKLM\SOFTWARE\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /v ".%%~i" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff" /f
     ) >nul 2>&1
 )
-findstr /c:"Enable Classic Volume Control" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Enable classic volume control" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Enabling Classic Volume Control
+    echo !INFO! Enabling classic volume control
     reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\MTCUVC" /v "EnableMtcUvc" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Enable Classic Alt Tab" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Enable classic alt tab" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Enabling Classic Alt Tab
+    echo !INFO! Enabling classic alt tab
     reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "AltTabSettings" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Enable Windows 8 Network Flayout" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Enable Windows 8 network flayout" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Enabling Windows 8 Network Flayout
+    echo !INFO! Enabling Windows 8 network flayout
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Settings\Network" /v "ReplaceVan" /t REG_DWORD /d "2" /f >nul 2>&1
 )
-findstr /c:"Disable Boot Graphics" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Disable Boot graphics" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Disabling Boot Graphics
+    echo !INFO! Disabling Boot graphics
     bcdedit /set quietboot On >nul 2>&1
     bcdedit /set bootuxdisabled On >nul 2>&1
     bcdedit /set {globalsettings} custom:16000067 true >nul 2>&1
     bcdedit /set {globalsettings} custom:16000068 true >nul 2>&1
     bcdedit /set {globalsettings} custom:16000069 true >nul 2>&1
 )
-findstr /c:"Enable F8 Boot Menu" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Enable F8 Boot menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    echo Enabling F8 Boot Menu
+    echo !INFO! Enabling F8 Boot menu
     bcdedit /set bootmenupolicy Legacy >nul 2>&1
 )
 del /f /q "%TMP%\interface.txt" >nul 2>&1
 
 call:MSGBOX "Replace Task Manager with Process Explorer ?" vbYesNo+vbQuestion "Task Manager"
 if !ERRORLEVEL! equ 6 (
-    echo Installing Process Explorer
+    echo !INFO! Installing Process Explorer
     taskkill /f /im "procexp.exe" >nul 2>&1
     if not exist "%WinDir%\procexp.exe" copy "resources\procexp.exe" "%WinDir%" >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\pcw" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
@@ -1620,7 +1618,7 @@ if !ERRORLEVEL! equ 6 (
 
 call:MSGBOX "Replace Start Menu with OpenShell ?" vbYesNo+vbQuestion "Start Menu"
 if !ERRORLEVEL! equ 6 (
-    echo Installing Openshell
+    echo !INFO! Installing Openshell
     call:CHOCO open-shell
     reg add "HKU\!USER_SID!\SOFTWARE\OpenShell" /t REG_SZ "" /f >nul 2>&1
     reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\OpenShell" /t REG_SZ "" /f >nul 2>&1
@@ -2120,6 +2118,8 @@ REM =====================================================
 REM Colors and text format
 set "CMDLINE=RED=[31m,S_GRAY=[90m,S_RED=[91m,S_GREEN=[92m,S_YELLOW=[93m,S_MAGENTA=[95m,S_WHITE=[97m,B_BLACK=[40m,B_YELLOW=[43m,UNDERLINE=[4m,_UNDERLINE=[24m"
 set "%CMDLINE:,=" & set "%"
+REM echo info
+set "INFO=!S_WHITE!%time:~0,8% [!S_RED!INFO!S_WHITE!]:!S_GREEN!"
 REM Check Computer type
 for /f "delims=:{}" %%i in ('wmic path Win32_systemenclosure get ChassisTypes^| findstr [0-9]') do set "CHASSIS=%%i"
 for %%i in (8 9 10 11 12 14 18 21 13 31 32 30) do if "!CHASSIS!"=="%%i" set "PC_TYPE=LAPTOP/TABLET"
