@@ -226,6 +226,74 @@ if !ERRORLEVEL! equ 0 (
 )
 del /f /q "%TMP%\security.txt" >nul 2>&1
 
+echo !INFO! Disabling Scheduled Tasks
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64 Critical" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 Critical" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Active Directory Rights Management Services Client\AD RMS Rights Policy Template Management (Automated)" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Active Directory Rights Management Services Client\AD RMS Rights Policy Template Management (Manual)" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\AppID\EDP Policy Manager" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\AppID\PolicyConverter" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\AppID\VerifiedPublisherCertStoreCheck" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\PcaPatchDbTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\StartupAppTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierdaily" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierinstall" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\BrokerInfrastructure\BgTaskRegistrationMaintenanceTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\AikCertEnrollTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\KeyPreGenTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Clip\License Validation" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleCommand" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleWnsCommand" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\IntegrityCheck" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\LocateCommandUserSession" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceAccountChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceLocationRightsChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDevicePeriodic24" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDevicePolicyChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceProtectionStateChanged" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceSettingChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterUserDevice" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Diagnosis\Scheduled" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticResolver" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdates" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdatesAsUser" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\SmartRetry" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\Installation" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\Uninstallation" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Management\Provisioning\Cellular" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MUI\LPRemove" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTaskNetwork" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\StateRepository\MaintenanceTasks" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Subscription\EnableLicenseAcquisition" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Subscription\LicenseAcquisition" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Sysmain\ResPriStaticDbSync" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Sysmain\WsSwapAssessmentTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Time Synchronization\ForceSynchronizeTime" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Time Synchronization\SynchronizeTime" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Time Zone\SynchronizeTimeZone" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\USB\Usb-Notifications" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Windows Error Reporting\QueueReporting" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Windows Filtering Platform\BfeOnServiceStartTypeChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Windows Media Sharing\UpdateLibrary" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Wininet\CacheTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\XblGameSave\XblGameSaveTask" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\PLA\System" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\PLA" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\RetailDemo\CleanupOfflineContent" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\RetailDemo" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\SyncCenter" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\TaskScheduler" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\Windows Activation Technologies" >NUL 2>&1
+
 echo !INFO! Speed up start time
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "DelayedDesktopSwitchTimeout" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "StartupDelayInMSec" /t REG_DWORD /d "0" /f >nul 2>&1
