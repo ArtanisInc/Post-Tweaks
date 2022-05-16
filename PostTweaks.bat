@@ -330,6 +330,9 @@ fsutil behavior set memoryusage 2 >nul 2>&1
 echo !INFO! Increasing file system memory cache size
 fsutil behavior set mftzone 2 >nul 2>&1
 
+echo !INFO! Prevent NTFS from deleting data
+fsutil behavior set Bugcheckoncorrupt 0 >nul 2>&1
+
 echo !INFO! Disabling random drivers verification
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\memory management" /v "DontVerifyRandomDrivers" /t REG_DWORD /d "1" /f >nul 2>&1
 
