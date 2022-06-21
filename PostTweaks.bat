@@ -5,8 +5,8 @@ chcp 65001 >nul 2>&1
 cd /d "%~dp0"
 title Post Tweaks
 
-set "VERSION=2.2.2"
-set "VERSION_INFO=04/06/2022"
+set "VERSION=2.2.3"
+set "VERSION_INFO=21/06/2022"
 
 call:SETCONSTANTS >nul 2>&1
 
@@ -145,10 +145,10 @@ if !ERRORLEVEL! equ 6 (
 )
 
 reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /ve >nul 2>&1
-if !ERRORLEVEL! neq 0 call:CHOCO dotnet3.5 & DISM /online /Enable-Feature /FeatureName:"NetFx3" /All /NoRestart
+if !ERRORLEVEL! neq 0 call:CHOCO dotnet3.5 & DISM /online /Enable-Feature /FeatureName:"NetFx3" /All /NoRestart >nul 2>&1
 
 call:ECHOX Disabling Windows settings synchronization
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync" /v "SyncPolicy" /t REG_DWORD /d "5" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync" /v "SyncPolicy" /t REG_DWORD /d "5" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSettingSync" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSettingSyncUserOverride" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v "DisableSyncOnPaidNetwork" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -170,16 +170,16 @@ if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling SmartScreen
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "EnableSmartScreen" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "SmartScreenEnabled" /t REG_SZ /d "Off" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost" /v "EnableWebContentEvaluation" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost" /v "EnableWebContentEvaluation" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Remove Windows Defender" "%TMP%\security.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Removing Windows Defender
-    for %%i in (Microsoft-Windows-SecurityCenter Windows-Defender Microsoft-Windows-HVSI Microsoft-Windows-SecureStartup
-    Microsoft-Windows-Killbits Microsoft-Windows-SenseClient Microsoft-Windows-DeviceGuard Microsoft-OneCore-VirtualizationBasedSecurity) do call "resources/install_wim_tweak.exe" /o /c %%i /r >nul 2>&1
+    for %%i in ("Microsoft-Windows-SecurityCenter" "Windows-Defender" "Microsoft-Windows-HVSI" "Microsoft-Windows-SecureStartup"
+    "Microsoft-Windows-Killbits" "Microsoft-Windows-SenseClient" "Microsoft-Windows-DeviceGuard" "Microsoft-OneCore-VirtualizationBasedSecurity") do call "resources/install_wim_tweak.exe" /o /c %%~i /r >nul 2>&1
 
     for %%i in ("HKLM\SOFTWARE\Microsoft\Windows Defender" "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender"
-    "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender Security Center" "HKCU\SOFTWARE\Microsoft\Windows Defender Security Center"
+    "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender Security Center" "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows Defender Security Center"
     "HKLM\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows Defender" "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WindowsDefenderSecurityCenter"
     "HKLM\SOFTWARE\Microsoft\PolicyManager\default\Defender" "HKLM\SOFTWARE\Policies\Microsoft\Microsoft Antimalware" "HKCR\Folder\shell\WindowsDefender"
     "HKCR\DesktopBackground\Shell\WindowsSecurity" "HKLM\SOFTWARE\Microsoft\Security Center" "HKLM\SYSTEM\CurrentControlSet\Services\wscsvc" "HKLM\SYSTEM\CurrentControlSet\Services\SecurityHealthService") do reg delete %%i /f >nul 2>&1
@@ -245,24 +245,24 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "Del
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "StartupDelayInMSec" /t REG_DWORD /d "0" /f >nul 2>&1
 
 call:ECHOX Decrease shutdown time
-reg add "HKCU\Control Panel\Desktop" /v "AutoEndTasks" /t REG_SZ /d "1" /f >nul 2>&1
-reg add "HKCU\Control Panel\Desktop" /v "HungAppTimeout" /t REG_SZ /d "1000" /f >nul 2>&1
-reg add "HKCU\Control Panel\Desktop" /v "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "AutoEndTasks" /t REG_SZ /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "HungAppTimeout" /t REG_SZ /d "1000" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f >nul 2>&1
 
 call:ECHOX Sound communications do nothing
-reg add "HKCU\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t REG_DWORD /d "3" /f >nul 2>&1
 
 call:ECHOX Disabling startup sound
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\BootAnimation" /v "DisableStartupSound" /t REG_DWORD /d "1" /f >nul 2>&1
 
 call:ECHOX Enabling num Lock at startup
-reg add "HKCU\Control Panel\Keyboard" /v "InitialKeyboardIndicators" /t REG_DWORD /d "2" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Keyboard" /v "InitialKeyboardIndicators" /t REG_DWORD /d "2" /f >nul 2>&1
 
 call:ECHOX Disabling mouse acceleration
-reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d "10" /f >nul 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >nul 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f >nul 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d "10" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >nul 2>&1
 
 call:ECHOX Disabling fast startup
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v "HiberbootEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -272,8 +272,6 @@ powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 !POWER_GUID! >nul
 powercfg /changename !POWER_GUID! "Post tweaks" "Promotes high performance at the expense of power consumption." >nul 2>&1
 powercfg /setactive !POWER_GUID! >nul 2>&1
 powercfg /hibernate off >nul 2>&1
-powercfg /setacvalueindex !POWER_GUID! 0012ee47-9041-4b5d-9b77-535fba8b1442 d3d55efd-c1ff-424e-9dc3-441be7833010 60000 >nul 2>&1
-powercfg /setacvalueindex !POWER_GUID! 0012ee47-9041-4b5d-9b77-535fba8b1442 d639518a-e56d-4345-8af2-b9f32fb26109 60000 >nul 2>&1
 powercfg /setacvalueindex !POWER_GUID! 238c9fa8-0aad-41ed-83f4-97be242c8f20 94ac6d29-73ce-41a6-809f-6363ba21b47e 0 >nul 2>&1
 powercfg /setacvalueindex !POWER_GUID! 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 0 >nul 2>&1
 powercfg /setacvalueindex !POWER_GUID! 238c9fa8-0aad-41ed-83f4-97be242c8f20 7bc4a2f9-d8fc-4469-b07b-33eb785aaca0 0 >nul 2>&1
@@ -316,8 +314,8 @@ if "!POWER_SAVING!"=="OFF" (
         call:MSGBOX "Would you like to disable CPU idle state ?\n\nDisabling the CPU idle state reduces latency but increases the CPU temperature." vbYesNo+vbQuestion "Power settings"
         if !ERRORLEVEL! equ 6 (
             call:ECHOX Disabling CPU idle state
-            powercfg -setacvalueindex scheme_current sub_processor 5d76a2ca-e8c0-402f-a133-2158492d58ad 1 >nul 2>&1
-            powercfg -setactive scheme_current >nul 2>&1
+            powercfg /setacvalueindex scheme_current sub_processor 5d76a2ca-e8c0-402f-a133-2158492d58ad 1 >nul 2>&1
+            powercfg /setactive scheme_current >nul 2>&1
         )
     )
 
@@ -335,11 +333,14 @@ if "!POWER_SAVING!"=="OFF" (
     for %%i in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended
         SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled
         D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState) do for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%i"^| findstr "HKEY"') do reg add "%%a" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
+
+    call:ECHOX Disabling devices power saving
+    call:POWERSHELL "$devices = Get-WmiObject Win32_PnPEntity; $powerMgmt = Get-WmiObject MSPower_DeviceEnable -Namespace root\wmi; foreach ($p in $powerMgmt){$IN = $p.InstanceName.ToUpper(); foreach ($h in $devices){$PNPDI = $h.PNPDeviceID; if ($IN -like \"*$PNPDI*\"){$p.enable = $False; $p.psbase.put()}}}"
 )
 
 call:ECHOX Disabling background apps
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\bam" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\dam" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 
@@ -364,10 +365,7 @@ fsutil behavior set disablelastaccess 1 >nul 2>&1
 call:ECHOX Disabling file system compression
 fsutil behavior set disablecompression 1 >nul 2>&1
 
-call:ECHOX Disabling file system encryption
-fsutil behavior set disableencryption 1 >nul 2>&1
-
-call:ECHOX Disabling virtual memory pagefile encryption
+call:ECHOX Disabling virtual memory page file encryption
 fsutil behavior set encryptpagingfile 0 >nul 2>&1
 
 call:ECHOX Increasing file system memory cache size
@@ -408,30 +406,30 @@ if "!STORAGE_TYPE!"=="SSD/NVMe" (
 call:MSGBOX "Would you like to enable Fullscreen Exclusive and disable GameBar ?\n\nBy default Windows use fullscreen optimization. It overrides the fullscreen mode in games and forces it to a borderless hybrid mode which comes with high latency and lower performance." vbYesNo+vbQuestion "Fullscreen Exclusive"
 if !ERRORLEVEL! equ 6 (
     call:ECHOX Enabling FSE and disabling GameBar
-    reg add "HKCU\SOFTWARE\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\GameBar" /v "AutoGameModeEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\GameBar" /v "GamePanelStartupTipIndex" /t REG_DWORD /d "3" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\GameBar" /v "ShowStartupPanel" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\GameBar" /v "UseNexusForGameBarEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\System\GameConfigStore" /v "GameDVR_DXGIHonorFSEWindowsCompatible" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\System\GameConfigStore" /v "GameDVR_DSEBehavior" /t REG_DWORD /d "2" /f >nul 2>&1
-    reg add "HKCU\System\GameConfigStore" /v "GameDVR_EFSEFeatureFlags" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehavior" /t REG_DWORD /d "2" /f >nul 2>&1
-    reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d "2" /f >nul 2>&1
-    reg add "HKCU\System\GameConfigStore" /v "GameDVR_HonorUserFSEBehaviorMode" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR" /v "AppCaptureEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "AutoGameModeEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "GamePanelStartupTipIndex" /t REG_DWORD /d "3" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "ShowStartupPanel" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\GameBar" /v "UseNexusForGameBarEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\System\GameConfigStore" /v "GameDVR_DXGIHonorFSEWindowsCompatible" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\System\GameConfigStore" /v "GameDVR_DSEBehavior" /t REG_DWORD /d "2" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\System\GameConfigStore" /v "GameDVR_EFSEFeatureFlags" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\System\GameConfigStore" /v "GameDVR_FSEBehavior" /t REG_DWORD /d "2" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d "2" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\System\GameConfigStore" /v "GameDVR_HonorUserFSEBehaviorMode" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR" /v "AppCaptureEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowGameDVR" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg delete "HKCU\System\GameConfigStore\Children" /f >nul 2>&1
-    reg delete "HKCU\System\GameConfigStore\Parents" /f >nul 2>&1
+    reg delete "HKU\!USER_SID!\System\GameConfigStore\Children" /f >nul 2>&1
+    reg delete "HKU\!USER_SID!\System\GameConfigStore\Parents" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter" /v "ActivationType" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "__COMPAT_LAYER" /t REG_SZ /d "~ DISABLEDXMAXIMIZEDWINDOWEDMODE" /f >nul 2>&1
 )
 
 call:MSGBOX "Would you like to set system processes that use cycles to low priority ?" vbYesNo+vbQuestion "Process priority"
 if !ERRORLEVEL! equ 6 (
-    call:ECHOX Setting system processes priority
+    call:ECHOX Setting system processes priority to low priority
     copy /y "%windir%\System32\svchost.exe" "%windir%\System32\audiosvchost.exe" >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Audiosrv" /v "ImagePath" /t REG_EXPAND_SZ /d "%windir%\System32\audiosvchost.exe -k LocalServiceNetworkRestricted -p" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\AudioEndpointBuilder" /v "ImagePath" /t REG_EXPAND_SZ /d "%windir%\System32\audiosvchost.exe -k LocalSystemNetworkRestricted -p" /f >nul 2>&1
@@ -440,11 +438,11 @@ if !ERRORLEVEL! equ 6 (
         reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%%i.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
         reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%%i.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "0" /f >nul 2>&1
     )
-    reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe" /v "MitigationAuditOptions" /t REG_BINARY /d "222222222222222222222222222222222222222222222222" /f >nul 2>&1
-    reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe" /v "MitigationOptions" /t REG_BINARY /d "222222222222222222222222222222222222222222222222" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "3" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "3" /f >nul 2>&1
 )
+
+call:ECHOX Setting CSRSS priority to high
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "3" /f >nul 2>&1
 
 call:ECHOX Removing IRQ priorities
 for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /f "irq"^| findstr "IRQ"') do reg delete "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "%%i" /f >nul 2>&1
@@ -489,7 +487,7 @@ if "!GPU!"=="NVIDIA" (
 
     call:ECHOX Disabling Nvidia telemetry
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\NvTelemetryContainer" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\NVIDIA Corporation\NVControlPanel2\Client" /v "OptInOrOutPreference" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\NVIDIA Corporation\NVControlPanel2\Client" /v "OptInOrOutPreference" /t REG_DWORD /d "0" /f >nul 2>&1
     for %%i in (NvTmMon NvTmRep NvProfile) do for /f "tokens=1 delims=," %%a in ('schtasks /query /fo csv^| findstr /v "TaskName"^| findstr "%%~i"') do schtasks /change /tn "%%a" /disable >nul 2>&1
 
     call:ECHOX Importing Nvidia profile
@@ -543,19 +541,19 @@ if "!GPU!"=="AMD" (
 if "!GPU!"=="INTEL" (
     call:ECHOX Applying Intel iGPU tweaks
     for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" /s /v "DriverDesc"^| findstr "HKEY Intel"') do if /i "%%i" neq "DriverDesc" (set "REGPATH_INTEL=%%i") else (
+        if "!POWER_SAVING!"=="OFF" reg add "!REGPATH_INTEL!" /v "AllowDeepCStates" /t REG_DWORD /d "0" /f
         reg add "!REGPATH_INTEL!" /v "Disable_OverlayDSQualityEnhancement" /t REG_DWORD /d "1" /f
         reg add "!REGPATH_INTEL!" /v "IncreaseFixedSegment" /t REG_DWORD /d "1" /f
         reg add "!REGPATH_INTEL!" /v "AdaptiveVsyncEnable" /t REG_DWORD /d "0" /f
         reg add "!REGPATH_INTEL!" /v "DisablePFonDP" /t REG_DWORD /d "1" /f
         reg add "!REGPATH_INTEL!" /v "EnableCompensationForDVI" /t REG_DWORD /d "1" /f
         reg add "!REGPATH_INTEL!" /v "NoFastLinkTrainingForeDP" /t REG_DWORD /d "0" /f
-        reg add "!REGPATH_INTEL!" /v "AllowDeepCStates" /t REG_DWORD /d "0" /f
         reg add "!REGPATH_INTEL!" /v "ACPowerPolicyVersion" /t REG_DWORD /d "16898" /f
         reg add "!REGPATH_INTEL!" /v "DCPowerPolicyVersion" /t REG_DWORD /d "16642" /f
     ) >nul 2>&1
 )
 
-call "resources\choicebox.exe" "Remove OneDrive;Remove Microsoft Store;Remove Xbox apps;Disable Windows search;Disable themes management;Disable push notifiactions and action center;Disable Task Scheduler;Disable diagnostics;Disable Windows Update;Disable Wi-Fi support;Disable bluetooth support;Disable printer support;Disable VPN support;Disable Bitlocker support;Disable QoS support;Disable files and printers share support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
+call "resources\choicebox.exe" "Remove OneDrive;Remove Xbox apps;Disable Windows Search;Disable themes management;Disable push notifications and action center;Disable Task Scheduler;Disable diagnostics;Disable Windows Update;Disable Wi-Fi support;Disable bluetooth support;Disable printer support;Disable VPN and PPPoE support;Disable Bitlocker support;Disable QoS support;Disable IPv6 support;Disable files and printers share support" "Here you can configure Windows services based on your computer usage" "Services" /C:2 >"%TMP%\services.txt"
 findstr /c:"Remove OneDrive" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Remove OneDrive
@@ -571,16 +569,6 @@ if !ERRORLEVEL! equ 0 (
     call "resources/install_wim_tweak.exe" /o /c Microsoft-Windows-OneDrive-Setup-Package /r >nul 2>&1
     call "resources/install_wim_tweak.exe" /o /c Microsoft-Windows-OneDrive-Setup-WOW64-Package /r >nul 2>&1
 )
-findstr /c:"Remove Microsoft Store" "%TMP%\services.txt" >nul 2>&1
-if !ERRORLEVEL! equ 0 (
-    call:ECHOX Removing Microsoft Store
-    for %%i in (iphlpsvc ClipSVC AppXSvc LicenseManager TokenBroker WalletService) do (
-        reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
-        if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
-    ) >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v "RemoveWindowsStore" /t REG_DWORD /d "1" /f >nul 2>&1
-    call:POWERSHELL "Get-AppxPackage *Store* | Remove-AppxPackage"
-)
 findstr /c:"Remove Xbox apps" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Removing Xbox apps
@@ -590,31 +578,28 @@ if !ERRORLEVEL! equ 0 (
     ) >nul 2>&1
     call:POWERSHELL "$AppxPackages = @(\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxApp\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxGameOverlay\",\"Microsoft.GamingApp\",\"Microsoft.GamingServices\");foreach ($AppxPackage in $AppxPackages){Get-AppxPackage -Name $AppxPackage -AllUsers | Remove-AppxPackage -AllUsers}"
 )
-findstr /c:"Disable Windows search" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable Windows Search" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    call:ECHOX Disabling Windows search
+    call:ECHOX Disabling Windows Search
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wsearch" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "CTFMon" /t REG_SZ /d "%WinDir%\System32\ctfmon.exe" /f >nul 2>&1
-    if exist "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" (
-        taskkill /f /im "SearchUI.exe"
-        move "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy" "%WinDir%\SystemApps\Microsoft.Windows.Cortana_cw5n1h2txyewy.backup"
-    ) >nul 2>&1
     if exist "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" (
         taskkill /f /im "SearchApp.exe"
         move "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy" "%WinDir%\SystemApps\Microsoft.Windows.Search_cw5n1h2txyewy.backup"
     ) >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable themes management" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling themes management
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Themes" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable push notifiactions and action center" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable push notifications and action center" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    call:ECHOX Disabling push notifiactions and action center
+    call:ECHOX Disabling push notifications and action center
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WpnUserService" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications" /v "ToastEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableNotificationCenter" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications" /v "ToastEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableNotificationCenter" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable Task Scheduler" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -657,10 +642,10 @@ if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling printer support
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Spooler" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 )
-findstr /c:"Disable VPN support" "%TMP%\services.txt" >nul 2>&1
+findstr /c:"Disable VPN and PPPoE support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    call:ECHOX Disabling VPN support
-    for %%i in (IKEEXT WinHttpAutoProxySvc RasMan SstpSvc iphlpsvc NdisVirtualBus Eaphost) do (
+    call:ECHOX Disabling VPN and PPPoE support
+    for %%i in (PptpMiniport RasAgileVpn Rasl2tp RasSstp RasPppoe RasMan) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
@@ -679,6 +664,13 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Psched" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_pacer"
 )
+findstr /c:"Disable IPv6 support" "%TMP%\services.txt" >nul 2>&1
+if !ERRORLEVEL! equ 0 (
+    call:ECHOX Disabling IPv6
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\iphlpsvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+    call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_tcpip6"
+)
 findstr /c:"Disable files and printers share support" "%TMP%\services.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling files and printers share support
@@ -686,7 +678,7 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_server"
     call:POWERSHELL "Disable-NetAdapterBinding -Name * -ComponentID ms_msclient"
-    DISM /online /Disable-Feature /FeatureName:"SmbDirect" /All /NoRestart
+    DISM /online /Disable-Feature /FeatureName:"SmbDirect" /All /NoRestart >nul 2>&1
 )
 del /f /q "%TMP%\services.txt" >nul 2>&1
 
@@ -740,7 +732,7 @@ if "!WIN_UPDATE!"=="ENABLED" (
     del /f /q "%TMP%\update.txt" >nul 2>&1
 )
 
-call:ECHOX Cleanning non-present devices
+call:ECHOX Cleaning non-present devices
 call:POWERSHELL "$Devices = Get-PnpDevice | ? Status -eq Unknown;foreach ($Device in $Devices) { &\"pnputil\" /remove-device $Device.InstanceId }"
 
 call:ECHOX Disabling HPET
@@ -815,9 +807,9 @@ if !ERRORLEVEL! equ 6 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "EnableAutoDoh" /t REG_DWORD /d "2" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "DoNotHoldNicBuffers" /t REG_DWORD /d "1" /f >nul 2>&1
 
-    call:MSGBOX "Would you like to optimize your NICs ?\n\nWill set best settings to ensure maximum performance (throughput and latency stability)" vbYesNo+vbQuestion "Network"
+    call:MSGBOX "Would you like to optimize your NIC's ?\n\nWill set best settings to ensure maximum performance (throughput and latency stability)" vbYesNo+vbQuestion "Network"
     if !ERRORLEVEL! equ 6 (
-        call:ECHOX Applying NICs settings
+        call:ECHOX Applying NIC's settings
         if "!POWER_SAVING!"=="OFF" (
             call:NIC_SETTINGS "PnPCapabilities" "24"
             call:NIC_SETTINGS "PowerDownPll" "0"
@@ -826,8 +818,10 @@ if !ERRORLEVEL! equ 6 (
             call:NIC_SETTINGS "EEELinkAdvertisement" "0"
             call:NIC_SETTINGS "EnableSavePowerNow" "0"
             call:NIC_SETTINGS "EnablePowerManagement" "0"
+            call:NIC_SETTINGS "EnablePME" "0"
             call:NIC_SETTINGS "EnableDynamicPowerGating" "0"
             call:NIC_SETTINGS "EnableConnectedPowerGating" "0"
+            call:NIC_SETTINGS "*EnableDynamicPowerGating" "0"
             call:NIC_SETTINGS "*NicAutoPowerSaver" "0"
             call:NIC_SETTINGS "*EEE" "0"
             call:NIC_SETTINGS "EEE" "0"
@@ -835,7 +829,7 @@ if !ERRORLEVEL! equ 6 (
             call:NIC_SETTINGS "AutoDisableGigabit" "0"
             call:NIC_SETTINGS "EnableGreenEthernet" "0"
             call:NIC_SETTINGS "GigaLite" "0"
-            call:NIC_SETTINGS "EnablePME" "0"
+            call:NIC_SETTINGS "DisableDelayedPowerUp" "1"
             call:NIC_SETTINGS "PowerSavingMode" "0"
             call:NIC_SETTINGS "EeeCtrlMode" "2"
             call:NIC_SETTINGS "EeePhyEnable" "0"
@@ -887,10 +881,12 @@ if !ERRORLEVEL! equ 6 (
         call:NIC_SETTINGS "*LsoV2IPv4" "0"
         call:NIC_SETTINGS "*LsoV2IPv6" "0"
         call:NIC_SETTINGS "LargeSendOffload" "0"
-        call:NIC_SETTINGS "*PriorityVLANTag" "0"
         call:NIC_SETTINGS "*RSS" "1"
         call:NIC_SETTINGS "*RSSProfile" "3"
         call:NIC_SETTINGS "*RssBaseProcNumber" "1"
+        call:NIC_SETTINGS "AlternateSemaphoreDelay" "0"
+        call:NIC_SETTINGS "TxIntDelay" "1"
+        call:NIC_SETTINGS "*PacketDirect" "1"
         call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$MaxNumRssQueues = [int](($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues').ValidRegistryValues | Measure-Object -Maximum).Maximum;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*NumRssQueues' -RegistryValue $MaxNumRssQueues}"
         call:POWERSHELL "$NetAdapters = Get-NetAdapterHardwareInfo | Get-NetAdapter;foreach ($NetAdapter in $NetAdapters) {$iReceiveBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers').NumericParameterMaxValue;$iTransmitBuffers = [int]($NetAdapter | Get-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers').NumericParameterMaxValue;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*ReceiveBuffers' -RegistryValue $iReceiveBuffers;$NetAdapter | Set-NetAdapterAdvancedProperty -RegistryKeyword '*TransmitBuffers' -RegistryValue $iTransmitBuffers}"
         if !CORES! gtr 6 (
@@ -901,8 +897,6 @@ if !ERRORLEVEL! equ 6 (
             call:NIC_SETTINGS "*UDPChecksumOffloadIPv6" "0"
             call:NIC_SETTINGS "TaskOffloadCap" "0"
         )
-        call:NIC_SETTINGS "AlternateSemaphoreDelay" "0"
-        call:NIC_SETTINGS "TxIntDelay" "1"
         call:NIC_SETTINGS "WirelessMode" "34"
         call:NIC_SETTINGS "CtsToItself" "1"
         call:NIC_SETTINGS "FatChannelIntolerant" "0"
@@ -937,7 +931,7 @@ if !ERRORLEVEL! equ 6 (
     )
 )
 
-call "resources\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable storage sense;Disable WiFi sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable Windows keylogger;Disable application compatibility telemetry;Disable license checking;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Cortana;Disable Windows customer experience improvement program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
+call "resources\choicebox.exe" "Disable privacy settings experience at sign-in;Disable app launch tracking;Disabling Windows feedback;Disable pen feedback;Disable PenWorkspace ads;Disable Bluetooth ads;Disable tailored experiences with diagnostic data;Disable shared experiences;Disable Windows Spotlight;Disable automatic apps installation;Disable welcome exeriences;Disable tips, tricks and suggestions;Disable metadata tracking;Disable storage sense;Disable WiFi sense;Disable error reporting;Disable advertising ID;Disable data collection;Disable Windows keylogger;Disable application compatibility telemetry;Disable license checking;Disable inking and typing data collection;Disable Windows Defender reporting;Disable timeline activity history;Disable Cortana;Disable Windows customer experience improvement program;Disable autoLogger;Disable unnecessary scheduled tasks" "Here you can configure Windows telemetry" "Privacy" /C:2 >"%TMP%\privacy.txt"
 findstr /c:"Disable privacy settings experience at sign-in" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling privacy settings experience at sign-in
@@ -946,13 +940,13 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable app launch tracking" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling app launch tracking
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackProgs" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackProgs" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disabling Windows feedback" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling Windows feedback
-    reg add "HKCU\SOFTWARE\Microsoft\Siuf\Rules" /v "NumberOfSIUFInPeriod" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Siuf\Rules" /v "PeriodInNanoSeconds" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Siuf\Rules" /v "NumberOfSIUFInPeriod" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Siuf\Rules" /v "PeriodInNanoSeconds" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable pen feedback" "%TMP%\privacy.txt" >nul 2>&1
@@ -963,49 +957,49 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable PenWorkspace ads" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling PenWorkspace ads
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\PenWorkspace" /v "PenWorkspaceAppSuggestionsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\PenWorkspace" /v "PenWorkspaceAppSuggestionsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-findstr /c:"Disable bluetooth ads" "%TMP%\privacy.txt" >nul 2>&1
+findstr /c:"Disable Bluetooth ads" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    call:ECHOX Disabling bluetooth ads
+    call:ECHOX Disabling Bluetooth ads
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Bluetooth" /v "AllowAdvertising" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable tailored experiences with diagnostic data" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling tailored experiences with diagnostic data
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable shared experiences" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling shared experiences
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v "RomeSdkChannelUserAuthzPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v "RomeSdkChannelUserAuthzPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable Windows Spotlight" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling Windows Spotlight
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsSpotlightFeatures" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable automatic apps installation" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling automatic apps installation
-    for %%i in (ContentDeliveryAllowed OemPreInstalledAppsEnabled PreInstalledAppsEnabled PreInstalledAppsEverEnabled SilentInstalledAppsEnabled) do reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
+    for %%i in (ContentDeliveryAllowed OemPreInstalledAppsEnabled PreInstalledAppsEnabled PreInstalledAppsEverEnabled SilentInstalledAppsEnabled) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable welcome experiences" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling welcome experiences
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-310093Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-310093Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable tips, tricks and suggestions" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling tips, tricks and suggestions
     for %%i in (SubscribedContent-314559Enabled SubscribedContent-338387Enabled SubscribedContent-338388Enabled SubscribedContent-338389Enabled
         SubscribedContent-338393Enabled SubscribedContent-353694Enabled SubscribedContent-353696Enabled SubscribedContent-314563Enabled
-        SubscribedContent-353698Enabled SystemPaneSuggestionsEnabled SoftLandingEnabled FeatureManagementEnabled) do reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
+        SubscribedContent-353698Enabled SystemPaneSuggestionsEnabled SoftLandingEnabled FeatureManagementEnabled) do reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "%%i" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableSoftLanding" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v "ScoobeSystemSettingEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v "ScoobeSystemSettingEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable metadata tracking" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1015,7 +1009,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable storage sense" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Removing storage sense
-    reg delete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense" /f >nul 2>&1
+    reg delete "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense" /f >nul 2>&1
 )
 findstr /c:"Disable WiFi sense" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1030,13 +1024,13 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\WerSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\wercplsupport" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" /v "DoReport" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v "Disabled" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v "Disabled" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v "Disabled" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable advertising ID" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling advertising ID
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" /v "DisabledByGroupPolicy" /t REG_DWORD /d "1" /f >nul 2>&1
 )
@@ -1068,10 +1062,10 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable inking and typing data collection" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling inking and typing data collection
-    reg add "HKCU\SOFTWARE\Microsoft\Input\TIPC" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Personalization\Settings" /v "AcceptedPrivacyPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Input\TIPC" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Personalization\Settings" /v "AcceptedPrivacyPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\TabletPC" /v "PreventHandwritingDataSharing" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\HandwritingErrorReports" /v "PreventHandwritingErrorReports" /t REG_DWORD /d "1" /f >nul 2>&1
 )
@@ -1094,7 +1088,7 @@ findstr /c:"Disable Cortana" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling Cortana
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Disable Windows customer experience improvement program" "%TMP%\privacy.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1127,7 +1121,7 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoplayfornonVolume" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "DontSetAutoplayCheckbox" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable NetBIOS" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1148,7 +1142,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable remote access" "%TMP%\hardening.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling remote access
-    for %%i in (RasAuto RasMan SessionEnv TermService UmRdpService RpcLocator) do (
+    for %%i in (RasAuto SessionEnv TermService UmRdpService RpcLocator) do (
         reg query "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /ve
         if !ERRORLEVEL! equ 0 reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%~i" /v "Start" /t REG_DWORD /d "4" /f
     ) >nul 2>&1
@@ -1186,6 +1180,7 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "EveryoneIncludesAnonymous" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "NoLMHash" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "LMCompatibilityLevel" /t REG_DWORD /d "5" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v "RunAsPPL" /t REG_DWORD /d "1" /f >nul 2>&1
     call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol"
     call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Client"
     call:POWERSHELL "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol-Server"
@@ -1202,8 +1197,8 @@ if !ERRORLEVEL! equ 0 (
 del /f /q "%TMP%\hardening.txt" >nul 2>&1
 
 call:ECHOX Disabling Bing from Windows search
-reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
 call:ECHOX Show BSOD details instead of the sad smiley
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\CrashControl" /v "DisplayParameters" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -1216,55 +1211,55 @@ call:ECHOX Display highly detailed status messages
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "VerboseStatus" /t REG_DWORD /d "1" /f >nul 2>&1
 
 call:ECHOX Disabling balloon tips
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "EnableBalloonTips" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "StartButtonBalloonTip" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "FolderContentsInfoTip" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowInfoTip" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "EnableBalloonTips" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "StartButtonBalloonTip" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "FolderContentsInfoTip" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowInfoTip" /t REG_DWORD /d "0" /f >nul 2>&1
 
 call:ECHOX Control panel view always small icons
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel" /v "AllItemsIconView" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel" /v "StartupPage" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel" /v "AllItemsIconView" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel" /v "StartupPage" /t REG_DWORD /d "1" /f >nul 2>&1
 
 call:ECHOX Improving the quality of the imported desktop Wallpaper
-reg add "HKCU\Control Panel\Desktop" /v "JPEGImportQuality" /t REG_DWORD /d "100" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "JPEGImportQuality" /t REG_DWORD /d "100" /f >nul 2>&1
 
 call:ECHOX Open file explorer to ^'This PC^'
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "LaunchTo" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "LaunchTo" /t REG_DWORD /d "1" /f >nul 2>&1
 
 call:ECHOX Reducing menu show delay time
-reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f >nul 2>&1
 
 call:ECHOX Disabling low disk space alerts
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoLowDiskSpaceChecks" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoLowDiskSpaceChecks" /t REG_DWORD /d "1" /f >nul 2>&1
 
 call:ECHOX Explorer shortcuts
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "LinkResolveIgnoreLinkInfo" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoResolveSearch" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoResolveTrack" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "LinkResolveIgnoreLinkInfo" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoResolveSearch" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoResolveTrack" /t REG_DWORD /d "1" /f >nul 2>&1
 
 call:ECHOX Disabling online content in Explorer
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "AllowOnlineTips" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInternetOpenWith" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoOnlinePrintsWizard" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoPublishingWizard" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoWebServices" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "AllowOnlineTips" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInternetOpenWith" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoOnlinePrintsWizard" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoPublishingWizard" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoWebServices" /t REG_DWORD /d "1" /f >nul 2>&1
 
 call:ECHOX Disabling recent items and frequent places in explorer
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackDocs" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoRecentDocsHistory" /d "1" /t REG_DWORD /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "ClearRecentDocsOnExit" /d "1" /t REG_DWORD /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackDocs" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoRecentDocsHistory" /d "1" /t REG_DWORD /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "ClearRecentDocsOnExit" /d "1" /t REG_DWORD /f >nul 2>&1
 
 call:ECHOX Hiding recently and frequently used folders in quick access
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowRecent" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowFrequent" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowRecent" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowFrequent" /t REG_DWORD /d "0" /f >nul 2>&1
 
 call:ECHOX Static scroll bars
-reg add "HKCU\Control Panel\Accessibility" /v "DynamicScrollbars" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKU\!USER_SID!\Control Panel\Accessibility" /v "DynamicScrollbars" /t REG_DWORD /d "0" /f >nul 2>&1
 
 call:ECHOX Disabling user tracking (recent run)
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInstrumentation" /d "1" /t REG_DWORD /f >nul 2>&1
+reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoInstrumentation" /d "1" /t REG_DWORD /f >nul 2>&1
 
-call "resources\choicebox.exe" "Remove 3D Objects from file explorer;Remove Library from file explorer;Remove Favorites from file explorer;Remove Family Group from file explorer;Remove Network from file explorer;Remove OneDrive from file explorer;Remove Quick Access from file explorer;Remove all folders in 'This PC' from file explorer;Hide Search box from taskbar;Hide Task view from taskbar;Hide People from taskbar;Hide Windows Ink Workspace from taskbar;Hide Meet Now from taskbar;Hide News and Interests from taskbar;Hide Windows Defender from taskbar;Hide Cortana from taskbar;Enable small icons in taskbar;Show all tray icons on taskbar;Show seconds on taskbar clock;Hide recently added apps in start menu;Hide most used apps in start menu;Unpin all start menu tiles;Increase taskbar transparency level;Disable transparency effect theme;Enable dark mode theme;Set desktop background to solid color;Remove mouse scheme;Adjust visual effects to best performance;Disable lock screen;Reduce size of buttons close mnimize maximize;Disable delete confirmation box for recycle Bin;Show file extensions;Show hidden folders;Disable shortcut name extension;Add Take Ownership to context menu;Add classic personalize to context menu;Restore classic windows photo viewer;Enable classic volume control;Enable classic alt tab;Enable Windows 8 network flayout;Disable Boot graphics;Enable F8 Boot menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
+call "resources\choicebox.exe" "Remove 3D Objects from file explorer;Remove Library from file explorer;Remove Favorites from file explorer;Remove Family Group from file explorer;Remove Network from file explorer;Remove OneDrive from file explorer;Remove Quick Access from file explorer;Remove all folders in 'This PC' from file explorer;Hide Search box from taskbar;Hide Task view from taskbar;Hide People from taskbar;Hide Windows Ink Workspace from taskbar;Hide Meet Now from taskbar;Hide News and Interests from taskbar;Hide Windows Defender from taskbar;Hide Cortana from taskbar;Enable small icons in taskbar;Show all tray icons on taskbar;Show seconds on taskbar clock;Hide recently added apps in start menu;Hide most used apps in start menu;Unpin all start menu tiles;Increase taskbar transparency level;Disable transparency effect theme;Enable dark mode theme;Set desktop background to solid color;Remove mouse scheme;Adjust visual effects to best performance;Disable lock screen;Reduce size of buttons close minimize maximize;Disable delete confirmation box for recycle Bin;Show file extensions;Show hidden folders;Disable shortcut name extension;Add Take Ownership to context menu;Add classic personalize to context menu;Restore classic windows photo viewer;Enable classic volume control;Enable classic alt tab;Enable Windows 8 network flayout;Disable Boot graphics;Enable F8 Boot menu" "Here you can configure Windows visual settings" "Interfaces" /C:2 >"%TMP%\interface.txt"
 findstr /c:"Remove 3D Objects from file explorer" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Removing 3D Objects from file explorer
@@ -1317,27 +1312,27 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Hide Search box from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Hiding Search box from taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Hide Task view from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Hiding Task view from taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Hide People from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Hiding People from taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" /v "PeopleBand" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" /v "PeopleBand" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Hide Windows Ink Workspace from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Hiding Windows Ink Workspace from taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\PenWorkspace" /v "PenWorkspaceButtonDesiredVisibility" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\PenWorkspace" /v "PenWorkspaceButtonDesiredVisibility" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Hide Meet Now from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Hiding Meet Now from taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "HideSCAMeetNow" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "HideSCAMeetNow" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Hide News and Interests from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1352,22 +1347,22 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Hide Cortana from taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Hiding Cortana from taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowCortanaButton" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Enable small icons in taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Enabling small icons in taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarSmallIcons" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarSmallIcons" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Show all tray icons on taskbar" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Show all tray icons on taskbar
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "EnableAutoTray" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "EnableAutoTray" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Show seconds on taskbar clock" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Show seconds on taskbar clock
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowSecondsInSystemClock" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowSecondsInSystemClock" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Hide recently added apps in start menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1382,7 +1377,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Unpin all start menu tiles" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Unpinning all start menu tiles
-    for /f "tokens=*" %%i in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\Cache\DefaultAccount" /s /f "start.tilegrid"^| findstr "start.tilegrid"') do reg delete "%%i" /f >nul 2>&1
+    for /f "tokens=*" %%i in ('reg query "HKU\!USER_SID!\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\Cache\DefaultAccount" /s /f "start.tilegrid"^| findstr "start.tilegrid"') do reg delete "%%i" /f >nul 2>&1
 )
 findstr /c:"Increase taskbar transparency level" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1392,21 +1387,21 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Disable transparency effect theme" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling transparency effect theme
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableBlurBehind" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableBlurBehind" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows" /v "DisableAcrylicBackgroundOnLogon" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Enable dark mode theme" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Enabling dark mode theme
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "AppsUseLightTheme" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "AppsUseLightTheme" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Set desktop background to solid color" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Setting desktop background to solid color
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" /v "BackgroundType" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Desktop" /v "Wallpaper" /t REG_SZ /d "" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Colors" /v "Background" /t REG_SZ /d "9 17 26" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers" /v "BackgroundType" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "Wallpaper" /t REG_SZ /d "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Colors" /v "Background" /t REG_SZ /d "9 17 26" /f >nul 2>&1
 )
 findstr /c:"Disable Timeline" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1416,35 +1411,35 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Remove mouse scheme" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Removing mouse scheme
-    reg add "HKCU\Control Panel\Cursors" /ve /t REG_SZ /d "" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Cursors" /v "ContactVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Cursors" /v "GestureVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Cursors" /v "CursorBaseSize" /t REG_DWORD /d "32" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Cursors" /v "Scheme Source" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Cursors" /v "Crosshair" /t REG_SZ /d "" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Cursors" /v "IBeam" /t REG_SZ /d "" /f >nul 2>&1
-    for %%i in (AppStarting Arrow Hand Help No NWPen SizeAll SizeNESW SizeNS SizeNWSE SizeWE UpArrow Wait Person Pin) do reg add "HKCU\Control Panel\Cursors" /v "%%i" /t REG_SZ /d "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /ve /t REG_SZ /d "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "ContactVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "GestureVisualization" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "CursorBaseSize" /t REG_DWORD /d "32" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "Scheme Source" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "Crosshair" /t REG_SZ /d "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "IBeam" /t REG_SZ /d "" /f >nul 2>&1
+    for %%i in (AppStarting Arrow Hand Help No NWPen SizeAll SizeNESW SizeNS SizeNWSE SizeWE UpArrow Wait Person Pin) do reg add "HKU\!USER_SID!\Control Panel\Cursors" /v "%%i" /t REG_SZ /d "" /f >nul 2>&1
 )
 findstr /c:"Adjust visual effects to best performance" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Setting Visual effects to performance
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d "3" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Desktop" /v "UserPreferencesMask" /t REG_BINARY /d "9012038010000000" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Desktop" /v "FontSmoothing" /t REG_SZ /d "2" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Desktop" /v "DragFullWindows" /t REG_SZ /d "1" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "IconsOnly" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewAlphaSelect" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewShadow" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarAnimations" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "SnapAssist" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "DisallowShaking" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\DWM" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\DWM" /v "EnableAeroPeek" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\DWM" /v "AlwaysHibernateThumbnails" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d "3" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "UserPreferencesMask" /t REG_BINARY /d "9012038010000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "FontSmoothing" /t REG_SZ /d "2" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop" /v "DragFullWindows" /t REG_SZ /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "IconsOnly" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewAlphaSelect" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewShadow" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarAnimations" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "SnapAssist" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "DisallowShaking" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "ColorPrevalence" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "EnableAeroPeek" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\DWM" /v "AlwaysHibernateThumbnails" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DWM" /v "DisallowAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "TurnOffSPIAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "TurnOffSPIAnimations" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable lock screen" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1453,11 +1448,11 @@ if !ERRORLEVEL! equ 0 (
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\SessionData" /v "AllowLockScreen" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v "NoLockScreen" /t REG_DWORD /d "1" /f >nul 2>&1
 )
-findstr /c:"Reduce size of buttons close mnimize maximize" "%TMP%\interface.txt" >nul 2>&1
+findstr /c:"Reduce size of buttons close minimize maximize" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
-    call:ECHOX Reducing size of buttons close mnimize maximize
-    reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "CaptionWidth" /t REG_SZ /d "-270" /f >nul 2>&1
-    reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "CaptionHeight" /t REG_SZ /d "-270" /f >nul 2>&1
+    call:ECHOX Reducing size of buttons close minimize maximize
+    reg add "HKU\!USER_SID!\Control Panel\Desktop\WindowMetrics" /v "CaptionWidth" /t REG_SZ /d "-270" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\Control Panel\Desktop\WindowMetrics" /v "CaptionHeight" /t REG_SZ /d "-270" /f >nul 2>&1
 )
 findstr /c:"Disable delete confirmation box for recycle Bin" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1467,17 +1462,17 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Show file extensions" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Show file extensions
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "HideFileExt" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "HideFileExt" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 findstr /c:"Show hidden folders" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Show hidden folders
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Hidden" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Hidden" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Disable shortcut name extension" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Disabling shortcut name extension
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "link" /t REG_BINARY /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "link" /t REG_BINARY /d "0" /f >nul 2>&1
 )
 findstr /c:"Add Take Ownership to context menu" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1550,7 +1545,7 @@ if !ERRORLEVEL! equ 0 (
 findstr /c:"Enable classic alt tab" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
     call:ECHOX Enabling classic alt tab
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "AltTabSettings" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "AltTabSettings" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 findstr /c:"Enable Windows 8 network flayout" "%TMP%\interface.txt" >nul 2>&1
 if !ERRORLEVEL! equ 0 (
@@ -1580,173 +1575,173 @@ if !ERRORLEVEL! equ 6 (
     if not exist "%WinDir%\procexp.exe" copy "resources\procexp.exe" "%WinDir%" >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\pcw" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\taskmgr.exe" /v "Debugger" /t REG_SZ /d "%WinDir%\procexp.exe" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "EulaAccepted" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Windowplacement" /t REG_BINARY /d "2c00000000000000010000000083ffff0083fffffffffffffffffffff801000041000000b5050000c1030000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "FindWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000096000000960000000000000000000000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SysinfoWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff28000000280000002b0300002b020000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "PropWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff2800000028000000e70100009b020000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllPropWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000028000000280000000000000000000000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "UnicodeFont" /t REG_BINARY /d "080000000000000000000000000000009001000000000000000000004d00530020005300680065006c006c00200044006c00670000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Divider" /t REG_BINARY /d "000000000000f03f" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SavedDivider" /t REG_BINARY /d "531f0e151662ea3f" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessImageColumnWidth" /t REG_DWORD /d "261" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowUnnamedHandles" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDllView" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortColumn" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortDirection" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortColumn" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortDirection" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortColumn" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortDirection" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightServices" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightOwnProcesses" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightRelocatedDlls" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightJobs" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNewProc" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDelProc" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightImmersive" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightProtected" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightPacked" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNetProcess" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightSuspend" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDuration" /t REG_DWORD /d "1000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCpuFractions" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowLowerpane" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllUsers" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowProcessTree" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolWarningShown" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HideWhenMinimized" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "AlwaysOntop" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "OneInstance" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "NumColumnSets" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ConfirmKill" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "RefreshRate" /t REG_DWORD /d "1000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "PrcessColumnCount" /t REG_DWORD /d "12" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllColumnCount" /t REG_DWORD /d "5" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleColumnCount" /t REG_DWORD /d "2" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultProcPropPage" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultSysInfoPage" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultDllPropPage" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolPath" /t REG_SZ /d "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorPacked" /t REG_DWORD /d "16711808" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorImmersive" /t REG_DWORD /d "15395328" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorOwn" /t REG_DWORD /d "16765136" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorServices" /t REG_DWORD /d "13684991" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorRelocatedDlls" /t REG_DWORD /d "10551295" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorGraphBk" /t REG_DWORD /d "15790320" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorJobs" /t REG_DWORD /d "27856" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorDelProc" /t REG_DWORD /d "4605695" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNewProc" /t REG_DWORD /d "4652870" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNet" /t REG_DWORD /d "10551295" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorProtected" /t REG_DWORD /d "8388863" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowHeatmaps" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorSuspend" /t REG_DWORD /d "8421504" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "StatusBarColumns" /t REG_DWORD /d "13589" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllCpus" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllGpus" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Opacity" /t REG_DWORD /d "100" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask1" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VerifySignatures" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalCheck" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalSubmitUnknown" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ToolbarBands" /t REG_BINARY /d "0601000000000000000000004b00000001000000000000004b00000002000000000000004b00000003000000000000004b0000000400000000000000400000000500000000000000500000000600000000000000930400000700000000000000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "UseGoogle" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNewProcesses" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "TrayCPUHistory" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowIoTray" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNetTray" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDiskTray" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowPhysTray" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCommitTray" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowGpuTray" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "FormatIoBytes" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "StackWindowPlacement" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ETWstandardUserWarning" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "0" /t REG_DWORD /d "26" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "1" /t REG_DWORD /d "42" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "2" /t REG_DWORD /d "1033" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "3" /t REG_DWORD /d "1111" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "4" /t REG_DWORD /d "1670" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "0" /t REG_DWORD /d "110" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "1" /t REG_DWORD /d "180" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "2" /t REG_DWORD /d "140" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "3" /t REG_DWORD /d "300" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "4" /t REG_DWORD /d "100" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "0" /t REG_DWORD /d "21" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "1" /t REG_DWORD /d "22" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "0" /t REG_DWORD /d "100" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "1" /t REG_DWORD /d "450" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "0" /t REG_DWORD /d "3" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "1" /t REG_DWORD /d "1055" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "2" /t REG_DWORD /d "1650" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "3" /t REG_DWORD /d "1060" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "4" /t REG_DWORD /d "1063" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "5" /t REG_DWORD /d "1069" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "6" /t REG_DWORD /d "1071" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "7" /t REG_DWORD /d "1065" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "8" /t REG_DWORD /d "5" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "9" /t REG_DWORD /d "1340" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "10" /t REG_DWORD /d "4" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "11" /t REG_DWORD /d "1670" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "12" /t REG_DWORD /d "1670" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "13" /t REG_DWORD /d "1670" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "14" /t REG_DWORD /d "1670" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "15" /t REG_DWORD /d "1670" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "16" /t REG_DWORD /d "1670" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "17" /t REG_DWORD /d "1653" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "18" /t REG_DWORD /d "1653" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "19" /t REG_DWORD /d "1653" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "0" /t REG_DWORD /d "261" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "1" /t REG_DWORD /d "35" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "2" /t REG_DWORD /d "37" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "3" /t REG_DWORD /d "70" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "4" /t REG_DWORD /d "70" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "5" /t REG_DWORD /d "100" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "6" /t REG_DWORD /d "100" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "7" /t REG_DWORD /d "52" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "8" /t REG_DWORD /d "43" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "9" /t REG_DWORD /d "63" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "10" /t REG_DWORD /d "31" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "11" /t REG_DWORD /d "60" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "12" /t REG_DWORD /d "31" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "13" /t REG_DWORD /d "60" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "14" /t REG_DWORD /d "70" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "15" /t REG_DWORD /d "70" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "16" /t REG_DWORD /d "44" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\Sysinternals\Process Explorer\VirusTotal" /v "VirusTotalTermsAccepted" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "EulaAccepted" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "Windowplacement" /t REG_BINARY /d "2c00000000000000010000000083ffff0083fffffffffffffffffffff801000041000000b5050000c1030000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "FindWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000096000000960000000000000000000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "SysinfoWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff28000000280000002b0300002b020000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "PropWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff2800000028000000e70100009b020000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "DllPropWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000028000000280000000000000000000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "UnicodeFont" /t REG_BINARY /d "080000000000000000000000000000009001000000000000000000004d00530020005300680065006c006c00200044006c00670000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "Divider" /t REG_BINARY /d "000000000000f03f" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "SavedDivider" /t REG_BINARY /d "531f0e151662ea3f" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessImageColumnWidth" /t REG_DWORD /d "261" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowUnnamedHandles" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDllView" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortColumn" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortDirection" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortColumn" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortDirection" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortColumn" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortDirection" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightServices" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightOwnProcesses" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightRelocatedDlls" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightJobs" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNewProc" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDelProc" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightImmersive" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightProtected" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightPacked" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNetProcess" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightSuspend" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDuration" /t REG_DWORD /d "1000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCpuFractions" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowLowerpane" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllUsers" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowProcessTree" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolWarningShown" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HideWhenMinimized" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "AlwaysOntop" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "OneInstance" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "NumColumnSets" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ConfirmKill" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "RefreshRate" /t REG_DWORD /d "1000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "PrcessColumnCount" /t REG_DWORD /d "12" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "DllColumnCount" /t REG_DWORD /d "5" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "HandleColumnCount" /t REG_DWORD /d "2" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultProcPropPage" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultSysInfoPage" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultDllPropPage" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolPath" /t REG_SZ /d "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorPacked" /t REG_DWORD /d "16711808" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorImmersive" /t REG_DWORD /d "15395328" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorOwn" /t REG_DWORD /d "16765136" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorServices" /t REG_DWORD /d "13684991" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorRelocatedDlls" /t REG_DWORD /d "10551295" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorGraphBk" /t REG_DWORD /d "15790320" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorJobs" /t REG_DWORD /d "27856" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorDelProc" /t REG_DWORD /d "4605695" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNewProc" /t REG_DWORD /d "4652870" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNet" /t REG_DWORD /d "10551295" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorProtected" /t REG_DWORD /d "8388863" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowHeatmaps" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ColorSuspend" /t REG_DWORD /d "8421504" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "StatusBarColumns" /t REG_DWORD /d "13589" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllCpus" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllGpus" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "Opacity" /t REG_DWORD /d "100" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask1" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "VerifySignatures" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalCheck" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalSubmitUnknown" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ToolbarBands" /t REG_BINARY /d "0601000000000000000000004b00000001000000000000004b00000002000000000000004b00000003000000000000004b0000000400000000000000400000000500000000000000500000000600000000000000930400000700000000000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "UseGoogle" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNewProcesses" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "TrayCPUHistory" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowIoTray" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNetTray" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDiskTray" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowPhysTray" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCommitTray" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ShowGpuTray" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "FormatIoBytes" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "StackWindowPlacement" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer" /v "ETWstandardUserWarning" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "0" /t REG_DWORD /d "26" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "1" /t REG_DWORD /d "42" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "2" /t REG_DWORD /d "1033" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "3" /t REG_DWORD /d "1111" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "4" /t REG_DWORD /d "1670" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "0" /t REG_DWORD /d "110" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "1" /t REG_DWORD /d "180" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "2" /t REG_DWORD /d "140" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "3" /t REG_DWORD /d "300" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "4" /t REG_DWORD /d "100" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "0" /t REG_DWORD /d "21" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "1" /t REG_DWORD /d "22" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "0" /t REG_DWORD /d "100" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "1" /t REG_DWORD /d "450" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "0" /t REG_DWORD /d "3" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "1" /t REG_DWORD /d "1055" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "2" /t REG_DWORD /d "1650" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "3" /t REG_DWORD /d "1060" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "4" /t REG_DWORD /d "1063" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "5" /t REG_DWORD /d "1069" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "6" /t REG_DWORD /d "1071" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "7" /t REG_DWORD /d "1065" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "8" /t REG_DWORD /d "5" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "9" /t REG_DWORD /d "1340" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "10" /t REG_DWORD /d "4" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "11" /t REG_DWORD /d "1670" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "12" /t REG_DWORD /d "1670" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "13" /t REG_DWORD /d "1670" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "14" /t REG_DWORD /d "1670" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "15" /t REG_DWORD /d "1670" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "16" /t REG_DWORD /d "1670" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "17" /t REG_DWORD /d "1653" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "18" /t REG_DWORD /d "1653" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "19" /t REG_DWORD /d "1653" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "0" /t REG_DWORD /d "261" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "1" /t REG_DWORD /d "35" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "2" /t REG_DWORD /d "37" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "3" /t REG_DWORD /d "70" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "4" /t REG_DWORD /d "70" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "5" /t REG_DWORD /d "100" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "6" /t REG_DWORD /d "100" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "7" /t REG_DWORD /d "52" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "8" /t REG_DWORD /d "43" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "9" /t REG_DWORD /d "63" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "10" /t REG_DWORD /d "31" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "11" /t REG_DWORD /d "60" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "12" /t REG_DWORD /d "31" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "13" /t REG_DWORD /d "60" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "14" /t REG_DWORD /d "70" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "15" /t REG_DWORD /d "70" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "16" /t REG_DWORD /d "44" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\Sysinternals\Process Explorer\VirusTotal" /v "VirusTotalTermsAccepted" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 
 call:MSGBOX "Replace Start Menu with OpenShell ?" vbYesNo+vbQuestion "Start Menu"
 if !ERRORLEVEL! equ 6 (
     call:ECHOX Installing Openshell
     call:CHOCO open-shell
-    reg add "HKCU\SOFTWARE\OpenShell" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\OpenShell" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\OpenShell\Settings" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\ClassicExplorer" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\ClassicExplorer" /v "ShowedToolbar" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\ClassicExplorer" /v "NewLine" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\ClassicExplorer\Settings" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\ClassicExplorer\Settings" /v "ShowStatusBar" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu" /v "ShowedStyle2" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu" /v "CSettingsDlg" /t REG_BINARY /d "c80100001a0100000000000000000000360d00000100000000000000" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu" /v "OldItems" /t REG_BINARY "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu" /v "ItemRanks" /t REG_BINARY /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "Version" /t REG_DWORD /d "04040098" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "AllProgramsMetro" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "RecentMetroApps" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "StartScreenShortcut" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "SearchInternet" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "GlassOverride" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "GlassColor" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkinW7" /t REG_SZ /d "Midnight" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkinVariationW7" /t REG_SZ "" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkinOptionsW7" /t REG_MULTI_SZ /d "USER_IMAGE=1"\0"SMALL_ICONS=0"\0"LARGE_FONT=0"\0"DISABLE_MASK=0"\0"OPAQUE=0"\0"TRANSPARENT_LESS=0"\0"TRANSPARENT_MORE=1"\0"WHITE_SUBMENUS2=0" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkipMetro" /t REG_DWORD /d "1" /f >nul 2>&1
-    reg add "HKCU\SOFTWARE\OpenShell\StartMenu\Settings" /v "MenuItems7" /t REG_MULTI_SZ /d "Item1.Command=user_files"\0"Item1.Settings=NOEXPAND"\0"Item2.Command=user_documents"\0"Item2.Settings=NOEXPAND"\0"Item3.Command=user_pictures"\0"Item3.Settings=NOEXPAND"\0"Item4.Command=user_music"\0"Item4.Settings=NOEXPAND"\0"Item5.Command=user_videos"\0"Item5.Settings=NOEXPAND"\0"Item6.Command=downloads"\0"Item6.Settings=NOEXPAND"\0"Item7.Command=homegroup"\0"Item7.Settings=ITEM_DISABLED"\0"Item8.Command=separator"\0"Item9.Command=games"\0"Item9.Settings=TRACK_RECENT|NOEXPAND|ITEM_DISABLED"\0"Item10.Command=favorites"\0"Item10.Settings=ITEM_DISABLED"\0"Item11.Command=recent_documents"\0"Item12.Command=computer"\0"Item12.Settings=NOEXPAND"\0"Item13.Command=network"\0"Item13.Settings=ITEM_DISABLED"\0"Item14.Command=network_connections"\0"Item14.Settings=ITEM_DISABLED"\0"Item15.Command=separator"\0"Item16.Command=control_panel"\0"Item16.Settings=TRACK_RECENT"\0"Item17.Command=pc_settings"\0"Item17.Settings=TRACK_RECENT"\0"Item18.Command=admin"\0"Item18.Settings=TRACK_RECENT|ITEM_DISABLED"\0"Item19.Command=devices"\0"Item19.Settings=ITEM_DISABLED"\0"Item20.Command=defaults"\0"Item20.Settings=ITEM_DISABLED"\0"Item21.Command=help"\0"Item21.Settings=ITEM_DISABLED"\0"Item22.Command=run"\0"Item23.Command=apps"\0"Item23.Settings=ITEM_DISABLED"\0"Item24.Command=windows_security"\0"Item24.Settings=ITEM_DISABLED" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\OpenShell" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\OpenShell\Settings" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\ClassicExplorer" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\ClassicExplorer" /v "ShowedToolbar" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\ClassicExplorer" /v "NewLine" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\ClassicExplorer\Settings" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\ClassicExplorer\Settings" /v "ShowStatusBar" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu" /v "ShowedStyle2" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu" /v "CSettingsDlg" /t REG_BINARY /d "c80100001a0100000000000000000000360d00000100000000000000" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu" /v "OldItems" /t REG_BINARY "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu" /v "ItemRanks" /t REG_BINARY /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "Version" /t REG_DWORD /d "04040098" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "AllProgramsMetro" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "RecentMetroApps" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "StartScreenShortcut" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "SearchInternet" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "GlassOverride" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "GlassColor" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkinW7" /t REG_SZ /d "Midnight" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkinVariationW7" /t REG_SZ "" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkinOptionsW7" /t REG_MULTI_SZ /d "USER_IMAGE=1"\0"SMALL_ICONS=0"\0"LARGE_FONT=0"\0"DISABLE_MASK=0"\0"OPAQUE=0"\0"TRANSPARENT_LESS=0"\0"TRANSPARENT_MORE=1"\0"WHITE_SUBMENUS2=0" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "SkipMetro" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKU\!USER_SID!\SOFTWARE\OpenShell\StartMenu\Settings" /v "MenuItems7" /t REG_MULTI_SZ /d "Item1.Command=user_files"\0"Item1.Settings=NOEXPAND"\0"Item2.Command=user_documents"\0"Item2.Settings=NOEXPAND"\0"Item3.Command=user_pictures"\0"Item3.Settings=NOEXPAND"\0"Item4.Command=user_music"\0"Item4.Settings=NOEXPAND"\0"Item5.Command=user_videos"\0"Item5.Settings=NOEXPAND"\0"Item6.Command=downloads"\0"Item6.Settings=NOEXPAND"\0"Item7.Command=homegroup"\0"Item7.Settings=ITEM_DISABLED"\0"Item8.Command=separator"\0"Item9.Command=games"\0"Item9.Settings=TRACK_RECENT|NOEXPAND|ITEM_DISABLED"\0"Item10.Command=favorites"\0"Item10.Settings=ITEM_DISABLED"\0"Item11.Command=recent_documents"\0"Item12.Command=computer"\0"Item12.Settings=NOEXPAND"\0"Item13.Command=network"\0"Item13.Settings=ITEM_DISABLED"\0"Item14.Command=network_connections"\0"Item14.Settings=ITEM_DISABLED"\0"Item15.Command=separator"\0"Item16.Command=control_panel"\0"Item16.Settings=TRACK_RECENT"\0"Item17.Command=pc_settings"\0"Item17.Settings=TRACK_RECENT"\0"Item18.Command=admin"\0"Item18.Settings=TRACK_RECENT|ITEM_DISABLED"\0"Item19.Command=devices"\0"Item19.Settings=ITEM_DISABLED"\0"Item20.Command=defaults"\0"Item20.Settings=ITEM_DISABLED"\0"Item21.Command=help"\0"Item21.Settings=ITEM_DISABLED"\0"Item22.Command=run"\0"Item23.Command=apps"\0"Item23.Settings=ITEM_DISABLED"\0"Item24.Command=windows_security"\0"Item24.Settings=ITEM_DISABLED" /f >nul 2>&1
 )
 
 taskkill /f /im "explorer.exe" >nul 2>&1
@@ -1761,12 +1756,12 @@ timeout /t 1 /nobreak >nul 2>&1
 goto MAIN_MENU
 
 :APPS_MENU_CLEAR
-set APPS_MENU="Google Chrome" "Mozilla Firefox" "Brave" "Opera GX" "Microsoft Edge" "Vivaldi" "Deezer" "Spotify" "iTunes" "PotPlayer" "VLC media player" "Audacity" "ImageGlass" "ShareX" "GIMP" "Discord" "TeamSpeak" "Teams" "Zoom" "Slack" "Adobe Acrobat Reader" "Foxit Reader" "Microsoft Office" "Libre Office" "7zip" "Winrar" "Visual Studio Code" "Notepad++" "FileZilla" "WinSCP" "PuTTY" "Python 3" "Java Runtime Environment 8" "Node.JS" "Steam" "GOG Galaxy" "Epic Games" "Uplay" "Battle.net" "Origin" "VirtualBox" "VMware Workstation Pro" "VMware Workstation Player" "TeamViewer" "AnyDesk" "qBittorrent" "Bulk Crap Uninstaller" "Everything" "MSI Afterburner" "Cairo Desktop Environment" "Visual C++ Redistributables" "DirectX" ".NET Framework 4.8"
+set APPS_MENU="Google Chrome" "Mozilla Firefox" "Brave" "Opera GX" "Microsoft Edge" "Vivaldi" "Deezer" "Spotify" "iTunes" "PotPlayer" "VLC media player" "Audacity" "OBS Studio" "ImageGlass" "ShareX" "GIMP" "Discord" "TeamSpeak" "Teams" "Zoom" "Slack" "Adobe Acrobat Reader" "Foxit Reader" "Microsoft Office" "Libre Office" "7zip" "Winrar" "Visual Studio Code" "Notepad++" "Github" "Git" "FileZilla" "WinSCP" "PuTTY" "Python 3" "Java Runtime Environment 8" "Node.JS" "Steam" "GOG Galaxy" "Epic Games" "Uplay" "Battle.net" "Origin" "VirtualBox" "VMware Workstation Pro" "VMware Workstation Player" "TeamViewer" "AnyDesk" "qBittorrent" "Bulk Crap Uninstaller" "Everything" "MSI Afterburner" "Visual C++ Redistributables" "DirectX" ".NET Framework 4.8"
 for %%i in (!APPS_MENU!) do set "%%~i=!S_MAGENTA![ ]!S_WHITE! %%~i"
 
 :APPS_MENU
 cls
-mode con lines=44 cols=143
+mode con lines=47 cols=143
 echo !S_MAGENTA!
 echo                             ╔═════════════════════════════════════════════════════════════════════════════════════╗
 echo                             ║                                  !S_GREEN!SOFTWARE INSTALLER!S_MAGENTA!                                 ║
@@ -1774,37 +1769,40 @@ echo                             ╚══════════════�
 echo.
 echo              !S_YELLOW!WEB BROWSERS                                 MEDIA                                        IMAGING
 echo              ------------                                 -----                                        -------
-echo               !S_GREEN!1 !Google Chrome!                          !S_GREEN!7 !Deezer!                                !S_GREEN!13 !ImageGlass!
-echo               !S_GREEN!2 !Mozilla Firefox!                        !S_GREEN!8 !Spotify!                               !S_GREEN!14 !ShareX!
-echo               !S_GREEN!3 !Brave!                                  !S_GREEN!9 !iTunes!                                !S_GREEN!15 !GIMP!
+echo               !S_GREEN!1 !Google Chrome!                          !S_GREEN!7 !Deezer!                                !S_GREEN!14 !ImageGlass!
+echo               !S_GREEN!2 !Mozilla Firefox!                        !S_GREEN!8 !Spotify!                               !S_GREEN!15 !ShareX!
+echo               !S_GREEN!3 !Brave!                                  !S_GREEN!9 !iTunes!                                !S_GREEN!16 !GIMP!
 echo               !S_GREEN!4 !Opera GX!                              !S_GREEN!10 !PotPlayer!
 echo               !S_GREEN!5 !Microsoft Edge!                        !S_GREEN!11 !VLC media player!
 echo               !S_GREEN!6 !Vivaldi!                               !S_GREEN!12 !Audacity!
+echo                                                           !S_GREEN!13 !OBS Studio!
 echo.
 echo              !S_YELLOW!MESSAGING                                    DOCUMENTS                                    COMPRESSION
 echo              ---------                                    ---------                                    -----------
-echo              !S_GREEN!16 !Discord!                               !S_GREEN!21 !Adobe Acrobat Reader!                  !S_GREEN!25 !7zip!
-echo              !S_GREEN!17 !TeamSpeak!                             !S_GREEN!22 !Foxit Reader!                          !S_GREEN!26 !Winrar!
-echo              !S_GREEN!18 !Teams!                                 !S_GREEN!23 !Microsoft Office!
-echo              !S_GREEN!19 !Zoom!                                  !S_GREEN!24 !Libre Office!
-echo              !S_GREEN!20 !Slack!
+echo              !S_GREEN!17 !Discord!                               !S_GREEN!22 !Adobe Acrobat Reader!                  !S_GREEN!26 !7zip!
+echo              !S_GREEN!18 !TeamSpeak!                             !S_GREEN!23 !Foxit Reader!                          !S_GREEN!27 !Winrar!
+echo              !S_GREEN!19 !Teams!                                 !S_GREEN!24 !Microsoft Office!
+echo              !S_GREEN!20 !Zoom!                                  !S_GREEN!25 !Libre Office!
+echo              !S_GREEN!21 !Slack!
 echo.
 echo              !S_YELLOW!DEVELOPER TOOLS                              GAMES LAUNCHER                               OTHERS
 echo              ---------------                              --------------                               ------
-echo              !S_GREEN!27 !Visual Studio Code!                    !S_GREEN!35 !Steam!                                 !S_GREEN!41 !VirtualBox!
-echo              !S_GREEN!28 !Notepad++!                             !S_GREEN!36 !GOG Galaxy!                            !S_GREEN!42 !VMware Workstation Pro!
-echo              !S_GREEN!29 !FileZilla!                             !S_GREEN!37 !Epic Games!                            !S_GREEN!43 !VMware Workstation Player!
-echo              !S_GREEN!30 !WinSCP!                                !S_GREEN!38 !Uplay!                                 !S_GREEN!44 !TeamViewer!
-echo              !S_GREEN!31 !PuTTY!                                 !S_GREEN!39 !Battle.net!                            !S_GREEN!45 !AnyDesk!
-echo              !S_GREEN!32 !Python 3!                              !S_GREEN!40 !Origin!                                !S_GREEN!46 !qBittorrent!
-echo              !S_GREEN!33 !Java Runtime Environment 8!                                                         !S_GREEN!47 !Bulk Crap Uninstaller!
-echo              !S_GREEN!34 !Node.JS!                                                                            !S_GREEN!48 !Everything!
-echo                                                                                                        !S_GREEN!49 !MSI Afterburner!
-echo              !S_RED!Recommended to install                                                                    !S_GREEN!50 !Cairo Desktop Environment!
+echo              !S_GREEN!28 !Visual Studio Code!                    !S_GREEN!38 !Steam!                                 !S_GREEN!44 !VirtualBox!
+echo              !S_GREEN!29 !Notepad++!                             !S_GREEN!39 !GOG Galaxy!                            !S_GREEN!45 !VMware Workstation Pro!
+echo              !S_GREEN!30 !Github!                                !S_GREEN!40 !Epic Games!                            !S_GREEN!46 !VMware Workstation Player!
+echo              !S_GREEN!31 !Git!                                   !S_GREEN!41 !Uplay!                                 !S_GREEN!47 !TeamViewer!
+echo              !S_GREEN!32 !FileZilla!                             !S_GREEN!42 !Battle.net!                            !S_GREEN!48 !AnyDesk!
+echo              !S_GREEN!33 !WinSCP!                                !S_GREEN!43 !Origin!                                !S_GREEN!49 !qBittorrent!
+echo              !S_GREEN!34 !PuTTY!                                                                              !S_GREEN!50 !Bulk Crap Uninstaller!
+echo              !S_GREEN!35 !Python 3!                                                                           !S_GREEN!51 !Everything!
+echo              !S_GREEN!36 !Java Runtime Environment 8!                                                         !S_GREEN!52 !MSI Afterburner!
+echo              !S_GREEN!37 !Node.JS!
+echo.
+echo              !S_RED!Recommended to install
 echo              ----------------------
-echo              !S_GREEN!51 !Visual C++ Redistributables!
-echo              !S_GREEN!52 !DirectX!
-echo              !S_GREEN!53 !.NET Framework 4.8!
+echo              !S_GREEN!53 !Visual C++ Redistributables!
+echo              !S_GREEN!54 !DirectX!
+echo              !S_GREEN!55 !.NET Framework 4.8!
 echo.
 echo                                                  !S_GRAY!Make your choices OR "!S_GREEN!BACK!S_GRAY!" AND press !S_GREEN!{ENTER}!S_GRAY!
 echo.
@@ -1824,56 +1822,58 @@ if "!choice!"=="9" if "!iTunes!"=="!S_MAGENTA![ ]!S_WHITE! iTunes" (set "iTunes=
 if "!choice!"=="10" if "!PotPlayer!"=="!S_MAGENTA![ ]!S_WHITE! PotPlayer" (set "PotPlayer=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! PotPlayer") else set "PotPlayer=!S_MAGENTA![ ]!S_WHITE! PotPlayer"
 if "!choice!"=="11" if "!VLC media player!"=="!S_MAGENTA![ ]!S_WHITE! VLC media player" (set "VLC media player=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VLC media player") else set "VLC media player=!S_MAGENTA![ ]!S_WHITE! VLC media player"
 if "!choice!"=="12" if "!Audacity!"=="!S_MAGENTA![ ]!S_WHITE! Audacity" (set "Audacity=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Audacity") else set "Audacity=!S_MAGENTA![ ]!S_WHITE! Audacity"
+if "!choice!"=="13" if "!OBS Studio!"=="!S_MAGENTA![ ]!S_WHITE! OBS Studio" (set "OBS Studio=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! OBS Studio") else set "OBS Studio=!S_MAGENTA![ ]!S_WHITE! OBS Studio"
 REM IMAGING
-if "!choice!"=="13" if "!ImageGlass!"=="!S_MAGENTA![ ]!S_WHITE! ImageGlass" (set "ImageGlass=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! ImageGlass") else set "ImageGlass=!S_MAGENTA![ ]!S_WHITE! ImageGlass"
-if "!choice!"=="14" if "!ShareX!"=="!S_MAGENTA![ ]!S_WHITE! ShareX" (set "ShareX=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! ShareX") else set "ShareX=!S_MAGENTA![ ]!S_WHITE! ShareX"
-if "!choice!"=="15" if "!GIMP!"=="!S_MAGENTA![ ]!S_WHITE! GIMP" (set "GIMP=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! GIMP") else set "GIMP=!S_MAGENTA![ ]!S_WHITE! GIMP"
+if "!choice!"=="14" if "!ImageGlass!"=="!S_MAGENTA![ ]!S_WHITE! ImageGlass" (set "ImageGlass=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! ImageGlass") else set "ImageGlass=!S_MAGENTA![ ]!S_WHITE! ImageGlass"
+if "!choice!"=="15" if "!ShareX!"=="!S_MAGENTA![ ]!S_WHITE! ShareX" (set "ShareX=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! ShareX") else set "ShareX=!S_MAGENTA![ ]!S_WHITE! ShareX"
+if "!choice!"=="16" if "!GIMP!"=="!S_MAGENTA![ ]!S_WHITE! GIMP" (set "GIMP=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! GIMP") else set "GIMP=!S_MAGENTA![ ]!S_WHITE! GIMP"
 REM MESSAGING
-if "!choice!"=="16" if "!Discord!"=="!S_MAGENTA![ ]!S_WHITE! Discord" (set "Discord=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Discord") else set "Discord=!S_MAGENTA![ ]!S_WHITE! Discord"
-if "!choice!"=="17" if "!TeamSpeak!"=="!S_MAGENTA![ ]!S_WHITE! TeamSpeak" (set "TeamSpeak=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! TeamSpeak") else set "TeamSpeak=!S_MAGENTA![ ]!S_WHITE! TeamSpeak"
-if "!choice!"=="18" if "!Teams!"=="!S_MAGENTA![ ]!S_WHITE! Teams" (set "Teams=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Teams") else set "Teams=!S_MAGENTA![ ]!S_WHITE! Teams"
-if "!choice!"=="19" if "!Zoom!"=="!S_MAGENTA![ ]!S_WHITE! Zoom" (set "Zoom=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Zoom") else set "Zoom=!S_MAGENTA![ ]!S_WHITE! Zoom"
-if "!choice!"=="20" if "!Slack!"=="!S_MAGENTA![ ]!S_WHITE! Slack" (set "Slack=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Slack") else set "Slack=!S_MAGENTA![ ]!S_WHITE! Slack"
+if "!choice!"=="17" if "!Discord!"=="!S_MAGENTA![ ]!S_WHITE! Discord" (set "Discord=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Discord") else set "Discord=!S_MAGENTA![ ]!S_WHITE! Discord"
+if "!choice!"=="18" if "!TeamSpeak!"=="!S_MAGENTA![ ]!S_WHITE! TeamSpeak" (set "TeamSpeak=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! TeamSpeak") else set "TeamSpeak=!S_MAGENTA![ ]!S_WHITE! TeamSpeak"
+if "!choice!"=="19" if "!Teams!"=="!S_MAGENTA![ ]!S_WHITE! Teams" (set "Teams=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Teams") else set "Teams=!S_MAGENTA![ ]!S_WHITE! Teams"
+if "!choice!"=="20" if "!Zoom!"=="!S_MAGENTA![ ]!S_WHITE! Zoom" (set "Zoom=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Zoom") else set "Zoom=!S_MAGENTA![ ]!S_WHITE! Zoom"
+if "!choice!"=="21" if "!Slack!"=="!S_MAGENTA![ ]!S_WHITE! Slack" (set "Slack=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Slack") else set "Slack=!S_MAGENTA![ ]!S_WHITE! Slack"
 REM DOCUMENTS
-if "!choice!"=="21" if "!Adobe Acrobat Reader!"=="!S_MAGENTA![ ]!S_WHITE! Adobe Acrobat Reader" (set "Adobe Acrobat Reader=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Adobe Acrobat Reader") else set "Adobe Acrobat Reader=!S_MAGENTA![ ]!S_WHITE! Adobe Acrobat Reader"
-if "!choice!"=="22" if "!Foxit Reader!"=="!S_MAGENTA![ ]!S_WHITE! Foxit Reader" (set "Foxit Reader=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Foxit Reader") else set "Foxit Reader=!S_MAGENTA![ ]!S_WHITE! Foxit Reader"
-if "!choice!"=="23" if "!Microsoft Office!"=="!S_MAGENTA![ ]!S_WHITE! Microsoft Office" (set "Microsoft Office=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Microsoft Office") else set "Microsoft Office=!S_MAGENTA![ ]!S_WHITE! Microsoft Office"
-if "!choice!"=="24" if "!Libre Office!"=="!S_MAGENTA![ ]!S_WHITE! Libre Office" (set "Libre Office=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Libre Office") else set "Libre Office=!S_MAGENTA![ ]!S_WHITE! Libre Office"
+if "!choice!"=="22" if "!Adobe Acrobat Reader!"=="!S_MAGENTA![ ]!S_WHITE! Adobe Acrobat Reader" (set "Adobe Acrobat Reader=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Adobe Acrobat Reader") else set "Adobe Acrobat Reader=!S_MAGENTA![ ]!S_WHITE! Adobe Acrobat Reader"
+if "!choice!"=="23" if "!Foxit Reader!"=="!S_MAGENTA![ ]!S_WHITE! Foxit Reader" (set "Foxit Reader=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Foxit Reader") else set "Foxit Reader=!S_MAGENTA![ ]!S_WHITE! Foxit Reader"
+if "!choice!"=="24" if "!Microsoft Office!"=="!S_MAGENTA![ ]!S_WHITE! Microsoft Office" (set "Microsoft Office=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Microsoft Office") else set "Microsoft Office=!S_MAGENTA![ ]!S_WHITE! Microsoft Office"
+if "!choice!"=="25" if "!Libre Office!"=="!S_MAGENTA![ ]!S_WHITE! Libre Office" (set "Libre Office=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Libre Office") else set "Libre Office=!S_MAGENTA![ ]!S_WHITE! Libre Office"
 REM COMPRESSION
-if "!choice!"=="25" if "!7zip!"=="!S_MAGENTA![ ]!S_WHITE! 7zip" (set "7zip=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! 7zip") else set "7zip=!S_MAGENTA![ ]!S_WHITE! 7zip"
-if "!choice!"=="26" if "!Winrar!"=="!S_MAGENTA![ ]!S_WHITE! Winrar" (set "Winrar=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Winrar") else set "Winrar=!S_MAGENTA![ ]!S_WHITE! Winrar"
+if "!choice!"=="26" if "!7zip!"=="!S_MAGENTA![ ]!S_WHITE! 7zip" (set "7zip=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! 7zip") else set "7zip=!S_MAGENTA![ ]!S_WHITE! 7zip"
+if "!choice!"=="27" if "!Winrar!"=="!S_MAGENTA![ ]!S_WHITE! Winrar" (set "Winrar=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Winrar") else set "Winrar=!S_MAGENTA![ ]!S_WHITE! Winrar"
 REM DEVELOPER TOOLS
-if "!choice!"=="27" if "!Visual Studio Code!"=="!S_MAGENTA![ ]!S_WHITE! Visual Studio Code" (set "Visual Studio Code=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Visual Studio Code") else set "Visual Studio Code=!S_MAGENTA![ ]!S_WHITE! Visual Studio Code"
-if "!choice!"=="28" if "!Notepad++!"=="!S_MAGENTA![ ]!S_WHITE! Notepad++" (set "Notepad++=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Notepad++") else set "Notepad++=!S_MAGENTA![ ]!S_WHITE! Notepad++"
-if "!choice!"=="29" if "!FileZilla!"=="!S_MAGENTA![ ]!S_WHITE! FileZilla" (set "FileZilla=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! FileZilla") else set "FileZilla=!S_MAGENTA![ ]!S_WHITE! FileZilla"
-if "!choice!"=="30" if "!WinSCP!"=="!S_MAGENTA![ ]!S_WHITE! WinSCP" (set "WinSCP=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! WinSCP") else set "WinSCP=!S_MAGENTA![ ]!S_WHITE! WinSCP"
-if "!choice!"=="31" if "!PuTTY!"=="!S_MAGENTA![ ]!S_WHITE! PuTTY" (set "PuTTY=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! PuTTY") else set "PuTTY=!S_MAGENTA![ ]!S_WHITE! PuTTY"
-if "!choice!"=="32" if "!Python 3!"=="!S_MAGENTA![ ]!S_WHITE! Python 3" (set "Python 3=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Python 3") else set "Python 3=!S_MAGENTA![ ]!S_WHITE! Python 3"
-if "!choice!"=="33" if "!Java Runtime Environment 8!"=="!S_MAGENTA![ ]!S_WHITE! Java Runtime Environment 8" (set "Java Runtime Environment 8=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Java Runtime Environment 8") else set "Java Runtime Environment 8=!S_MAGENTA![ ]!S_WHITE! Java Runtime Environment 8"
-if "!choice!"=="34" if "!Node.JS!"=="!S_MAGENTA![ ]!S_WHITE! Node.JS" (set "Node.JS=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Node.JS") else set "Node.JS=!S_MAGENTA![ ]!S_WHITE! Node.JS"
-REM GAMES LAUNCHER
-if "!choice!"=="35" if "!Steam!"=="!S_MAGENTA![ ]!S_WHITE! Steam" (set "Steam=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Steam") else set "Steam=!S_MAGENTA![ ]!S_WHITE! Steam"
-if "!choice!"=="36" if "!GOG Galaxy!"=="!S_MAGENTA![ ]!S_WHITE! GOG Galaxy" (set "GOG Galaxy=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! GOG Galaxy") else set "GOG Galaxy=!S_MAGENTA![ ]!S_WHITE! GOG Galaxy"
-if "!choice!"=="37" if "!Epic Games!"=="!S_MAGENTA![ ]!S_WHITE! Epic Games" (set "Epic Games=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Epic Games") else set "Epic Games=!S_MAGENTA![ ]!S_WHITE! Epic Games"
-if "!choice!"=="38" if "!Uplay!"=="!S_MAGENTA![ ]!S_WHITE! Uplay" (set "Uplay=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Uplay") else set "Uplay=!S_MAGENTA![ ]!S_WHITE! Uplay"
-if "!choice!"=="39" if "!Battle.net!"=="!S_MAGENTA![ ]!S_WHITE! Battle.net" (set "Battle.net=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Battle.net") else set "Battle.net=!S_MAGENTA![ ]!S_WHITE! Battle.net"
-if "!choice!"=="40" if "!Origin!"=="!S_MAGENTA![ ]!S_WHITE! Origin" (set "Origin=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Origin") else set "Origin=!S_MAGENTA![ ]!S_WHITE! Origin"
+if "!choice!"=="28" if "!Visual Studio Code!"=="!S_MAGENTA![ ]!S_WHITE! Visual Studio Code" (set "Visual Studio Code=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Visual Studio Code") else set "Visual Studio Code=!S_MAGENTA![ ]!S_WHITE! Visual Studio Code"
+if "!choice!"=="29" if "!Notepad++!"=="!S_MAGENTA![ ]!S_WHITE! Notepad++" (set "Notepad++=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Notepad++") else set "Notepad++=!S_MAGENTA![ ]!S_WHITE! Notepad++"
+if "!choice!"=="30" if "!Github!"=="!S_MAGENTA![ ]!S_WHITE! Github" (set "Github=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Github") else set "Github=!S_MAGENTA![ ]!S_WHITE! Github"
+if "!choice!"=="31" if "!Git!"=="!S_MAGENTA![ ]!S_WHITE! Git" (set "Git=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Git") else set "Git=!S_MAGENTA![ ]!S_WHITE! Git"
+if "!choice!"=="32" if "!FileZilla!"=="!S_MAGENTA![ ]!S_WHITE! FileZilla" (set "FileZilla=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! FileZilla") else set "FileZilla=!S_MAGENTA![ ]!S_WHITE! FileZilla"
+if "!choice!"=="33" if "!WinSCP!"=="!S_MAGENTA![ ]!S_WHITE! WinSCP" (set "WinSCP=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! WinSCP") else set "WinSCP=!S_MAGENTA![ ]!S_WHITE! WinSCP"
+if "!choice!"=="34" if "!PuTTY!"=="!S_MAGENTA![ ]!S_WHITE! PuTTY" (set "PuTTY=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! PuTTY") else set "PuTTY=!S_MAGENTA![ ]!S_WHITE! PuTTY"
+if "!choice!"=="35" if "!Python 3!"=="!S_MAGENTA![ ]!S_WHITE! Python 3" (set "Python 3=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Python 3") else set "Python 3=!S_MAGENTA![ ]!S_WHITE! Python 3"
+if "!choice!"=="36" if "!Java Runtime Environment 8!"=="!S_MAGENTA![ ]!S_WHITE! Java Runtime Environment 8" (set "Java Runtime Environment 8=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Java Runtime Environment 8") else set "Java Runtime Environment 8=!S_MAGENTA![ ]!S_WHITE! Java Runtime Environment 8"
+if "!choice!"=="37" if "!Node.JS!"=="!S_MAGENTA![ ]!S_WHITE! Node.JS" (set "Node.JS=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Node.JS") else set "Node.JS=!S_MAGENTA![ ]!S_WHITE! Node.JS"
+REM GAMES LAUNCHE
+if "!choice!"=="38" if "!Steam!"=="!S_MAGENTA![ ]!S_WHITE! Steam" (set "Steam=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Steam") else set "Steam=!S_MAGENTA![ ]!S_WHITE! Steam"
+if "!choice!"=="39" if "!GOG Galaxy!"=="!S_MAGENTA![ ]!S_WHITE! GOG Galaxy" (set "GOG Galaxy=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! GOG Galaxy") else set "GOG Galaxy=!S_MAGENTA![ ]!S_WHITE! GOG Galaxy"
+if "!choice!"=="40" if "!Epic Games!"=="!S_MAGENTA![ ]!S_WHITE! Epic Games" (set "Epic Games=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Epic Games") else set "Epic Games=!S_MAGENTA![ ]!S_WHITE! Epic Games"
+if "!choice!"=="41" if "!Uplay!"=="!S_MAGENTA![ ]!S_WHITE! Uplay" (set "Uplay=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Uplay") else set "Uplay=!S_MAGENTA![ ]!S_WHITE! Uplay"
+if "!choice!"=="42" if "!Battle.net!"=="!S_MAGENTA![ ]!S_WHITE! Battle.net" (set "Battle.net=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Battle.net") else set "Battle.net=!S_MAGENTA![ ]!S_WHITE! Battle.net"
+if "!choice!"=="43" if "!Origin!"=="!S_MAGENTA![ ]!S_WHITE! Origin" (set "Origin=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Origin") else set "Origin=!S_MAGENTA![ ]!S_WHITE! Origin"
 REM OTHERS
-if "!choice!"=="41" if "!VirtualBox!"=="!S_MAGENTA![ ]!S_WHITE! VirtualBox" (set "VirtualBox=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VirtualBox") else set "VirtualBox=!S_MAGENTA![ ]!S_WHITE! VirtualBox"
-if "!choice!"=="42" if "!VMware Workstation Pro!"=="!S_MAGENTA![ ]!S_WHITE! VMware Workstation Pro" (set "VMware Workstation Pro=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VMware Workstation Pro") else set "VMware Workstation Pro=!S_MAGENTA![ ]!S_WHITE! VMware Workstation Pro"
-if "!choice!"=="43" if "!VMware Workstation Player!"=="!S_MAGENTA![ ]!S_WHITE! VMware Workstation Player" (set "VMware Workstation Player=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VMware Workstation Player") else set "VMware Workstation Player=!S_MAGENTA![ ]!S_WHITE! VMware Workstation Player"
-if "!choice!"=="44" if "!TeamViewer!"=="!S_MAGENTA![ ]!S_WHITE! TeamViewer" (set "TeamViewer=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! TeamViewer") else set "TeamViewer=!S_MAGENTA![ ]!S_WHITE! TeamViewer"
-if "!choice!"=="45" if "!AnyDesk!"=="!S_MAGENTA![ ]!S_WHITE! AnyDesk" (set "AnyDesk=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! AnyDesk") else set "AnyDesk=!S_MAGENTA![ ]!S_WHITE! AnyDesk"
-if "!choice!"=="46" if "!qBittorrent!"=="!S_MAGENTA![ ]!S_WHITE! qBittorrent" (set "qBittorrent=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! qBittorrent") else set "qBittorrent=!S_MAGENTA![ ]!S_WHITE! qBittorrent"
-if "!choice!"=="47" if "!Bulk Crap Uninstaller!"=="!S_MAGENTA![ ]!S_WHITE! Bulk Crap Uninstaller" (set "Bulk Crap Uninstaller=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Bulk Crap Uninstaller") else set "Bulk Crap Uninstaller=!S_MAGENTA![ ]!S_WHITE! Bulk Crap Uninstaller"
-if "!choice!"=="48" if "!Everything!"=="!S_MAGENTA![ ]!S_WHITE! Everything" (set "Everything=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Everything") else set "Everything=!S_MAGENTA![ ]!S_WHITE! Everything"
-if "!choice!"=="49" if "!MSI Afterburner!"=="!S_MAGENTA![ ]!S_WHITE! MSI Afterburner" (set "MSI Afterburner=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! MSI Afterburner") else set "MSI Afterburner=!S_MAGENTA![ ]!S_WHITE! MSI Afterburner"
-if "!choice!"=="50" if "!Cairo Desktop Environment!"=="!S_MAGENTA![ ]!S_WHITE! Cairo Desktop Environment" (set "Cairo Desktop Environment=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Cairo Desktop Environment") else set "Cairo Desktop Environment=!S_MAGENTA![ ]!S_WHITE! Cairo Desktop Environment"
+if "!choice!"=="44" if "!VirtualBox!"=="!S_MAGENTA![ ]!S_WHITE! VirtualBox" (set "VirtualBox=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VirtualBox") else set "VirtualBox=!S_MAGENTA![ ]!S_WHITE! VirtualBox"
+if "!choice!"=="45" if "!VMware Workstation Pro!"=="!S_MAGENTA![ ]!S_WHITE! VMware Workstation Pro" (set "VMware Workstation Pro=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VMware Workstation Pro") else set "VMware Workstation Pro=!S_MAGENTA![ ]!S_WHITE! VMware Workstation Pro"
+if "!choice!"=="46" if "!VMware Workstation Player!"=="!S_MAGENTA![ ]!S_WHITE! VMware Workstation Player" (set "VMware Workstation Player=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VMware Workstation Player") else set "VMware Workstation Player=!S_MAGENTA![ ]!S_WHITE! VMware Workstation Player"
+if "!choice!"=="47" if "!TeamViewer!"=="!S_MAGENTA![ ]!S_WHITE! TeamViewer" (set "TeamViewer=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! TeamViewer") else set "TeamViewer=!S_MAGENTA![ ]!S_WHITE! TeamViewer"
+if "!choice!"=="48" if "!AnyDesk!"=="!S_MAGENTA![ ]!S_WHITE! AnyDesk" (set "AnyDesk=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! AnyDesk") else set "AnyDesk=!S_MAGENTA![ ]!S_WHITE! AnyDesk"
+if "!choice!"=="49" if "!qBittorrent!"=="!S_MAGENTA![ ]!S_WHITE! qBittorrent" (set "qBittorrent=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! qBittorrent") else set "qBittorrent=!S_MAGENTA![ ]!S_WHITE! qBittorrent"
+if "!choice!"=="50" if "!Bulk Crap Uninstaller!"=="!S_MAGENTA![ ]!S_WHITE! Bulk Crap Uninstaller" (set "Bulk Crap Uninstaller=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Bulk Crap Uninstaller") else set "Bulk Crap Uninstaller=!S_MAGENTA![ ]!S_WHITE! Bulk Crap Uninstaller"
+if "!choice!"=="51" if "!Everything!"=="!S_MAGENTA![ ]!S_WHITE! Everything" (set "Everything=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Everything") else set "Everything=!S_MAGENTA![ ]!S_WHITE! Everything"
+if "!choice!"=="52" if "!MSI Afterburner!"=="!S_MAGENTA![ ]!S_WHITE! MSI Afterburner" (set "MSI Afterburner=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! MSI Afterburner") else set "MSI Afterburner=!S_MAGENTA![ ]!S_WHITE! MSI Afterburner"
 REM Recommended to install
-if "!choice!"=="51" if "!Visual C++ Redistributables!"=="!S_MAGENTA![ ]!S_WHITE! Visual C++ Redistributables" (set "Visual C++ Redistributables=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Visual C++ Redistributables") else set "Visual C++ Redistributables=!S_MAGENTA![ ]!S_WHITE! Visual C++ Redistributables"
-if "!choice!"=="52" if "!DirectX!"=="!S_MAGENTA![ ]!S_WHITE! DirectX" (set "DirectX=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! DirectX") else set "DirectX=!S_MAGENTA![ ]!S_WHITE! DirectX"
-if "!choice!"=="53" if "!.NET Framework 4.8!"=="!S_MAGENTA![ ]!S_WHITE! .NET Framework 4.8" (set ".NET Framework 4.8=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! .NET Framework 4.8") else set ".NET Framework 4.8=!S_MAGENTA![ ]!S_WHITE! .NET Framework 4.8"
-for /l %%i in (1,1,53) do if "!choice!"=="%%i" goto APPS_MENU
+if "!choice!"=="53" if "!Visual C++ Redistributables!"=="!S_MAGENTA![ ]!S_WHITE! Visual C++ Redistributables" (set "Visual C++ Redistributables=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Visual C++ Redistributables") else set "Visual C++ Redistributables=!S_MAGENTA![ ]!S_WHITE! Visual C++ Redistributables"
+if "!choice!"=="54" if "!DirectX!"=="!S_MAGENTA![ ]!S_WHITE! DirectX" (set "DirectX=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! DirectX") else set "DirectX=!S_MAGENTA![ ]!S_WHITE! DirectX"
+if "!choice!"=="55" if "!.NET Framework 4.8!"=="!S_MAGENTA![ ]!S_WHITE! .NET Framework 4.8" (set ".NET Framework 4.8=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! .NET Framework 4.8") else set ".NET Framework 4.8=!S_MAGENTA![ ]!S_WHITE! .NET Framework 4.8"
+for /l %%i in (1,1,55) do if "!choice!"=="%%i" goto APPS_MENU
 if "!choice!"=="" (
     for %%i in (!APPS_MENU!) do if "!%%~i!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! %%~i" goto APPS_INSTALL
     echo                                                      !RED!ERROR: !S_GREEN!"!choice!"!S_GRAY! is not a valid choice...
@@ -1901,6 +1901,7 @@ if "!iTunes!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! iTunes" call:CHOCO i
 if "!PotPlayer!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! PotPlayer" call:CHOCO potplayer
 if "!VLC media player!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! VLC media player" call:CHOCO vlc
 if "!Audacity!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Audacity" call:CHOCO audacity
+if "!OBS Studio!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! OBS Studio" call:CHOCO obs-studio
 REM IMAGING
 if "!ImageGlass!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! ImageGlass" call:CHOCO imageglass
 if "!ShareX!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! ShareX" call:CHOCO sharex
@@ -1922,6 +1923,8 @@ if "!Winrar!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Winrar" call:CHOCO w
 REM DEVELOPER TOOLS
 if "!Visual Studio Code!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Visual Studio Code" call:CHOCO vscode
 if "!Notepad++!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Notepad++" call:CHOCO notepadplusplus
+if "!Github!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Github" call:CHOCO github-desktop
+if "!Git!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Git" call:CHOCO git
 if "!FileZilla!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! FileZilla" call:CHOCO filezilla
 if "!WinSCP!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! WinSCP" call:CHOCO winscp
 if "!PuTTY!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! PuTTY" call:CHOCO putty & call:SHORTCUT "PuTTY" "%UserProfile%\desktop" "%ProgramData%\chocolatey\bin\PUTTY.exe" "\ProgramData\chocolatey\bin"
@@ -1945,7 +1948,6 @@ if "!qBittorrent!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! qBittorrent" ca
 if "!Bulk Crap Uninstaller!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Bulk Crap Uninstaller" call:CHOCO bulk-crap-uninstaller
 if "!Everything!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Everything" call:CHOCO everything
 if "!MSI Afterburner!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! MSI Afterburner" call:CHOCO msiafterburner
-if "!Cairo Desktop Environment!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Cairo Desktop Environment" call:CHOCO cairoshell
 REM Recommended to install
 if "!Visual C++ Redistributables!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Visual C++ Redistributables" call:CHOCO vcredist-all
 if "!DirectX!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! DirectX" call:CHOCO directx
@@ -1953,7 +1955,7 @@ if "!.NET Framework 4.8!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! .NET Fra
 goto APPS_MENU_CLEAR
 
 :TOOLS_MENU_CLEAR
-set TOOLS="NSudo" "Autoruns" "ServiWin" "Device Cleanup" "Cleanmgr Plus" "Ventoy" "Rufus" "Registry Workshop" "CPU-Z" "GPU-Z" "HWiNFO" "CrystalDiskInfo" "Snappy Driver Installer" "NVCleanstall" "Radeon Software Slimmer" "Display Driver Uninstaller" "DriverStore Explorer" "Unigine Superposition" "CINEBENCH" "AIDA64" "OCCT" "CapFrameX" "MouseTester" "GoInterruptPolicy" "AutoGpuAffinity" "TCP Optimizer" "WLAN Optimizer" "DNS Jumper" "Nvidia Profile Inspector" "RadeonMod" "GPU Pixel Clock Patcher" "Custom Resolution Utility" "SweetLow Mouse Rate Changer" "ThrottleStop" "Power Settings Explorer"
+set TOOLS="NSudo" "Autoruns" "ServiWin" "Device Cleanup" "Cleanmgr Plus" "Ventoy" "Rufus" "Registry Finder" "CPU-Z" "GPU-Z" "HWiNFO" "CrystalDiskInfo" "Snappy Driver Installer" "NVCleanstall" "Radeon Software Slimmer" "Display Driver Uninstaller" "DriverStore Explorer" "Unigine Superposition" "CINEBENCH" "AIDA64" "OCCT" "CapFrameX" "MouseTester" "GoInterruptPolicy" "AutoGpuAffinity" "TCP Optimizer" "WLAN Optimizer" "DNS Jumper" "Nvidia Profile Inspector" "RadeonMod" "GPU Pixel Clock Patcher" "Custom Resolution Utility" "SweetLow Mouse Rate Changer" "ThrottleStop" "Power Settings Explorer"
 for %%i in (!TOOLS!) do set "%%~i=!S_MAGENTA![ ]!S_WHITE! %%~i"
 
 :TOOLS_MENU
@@ -1973,7 +1975,7 @@ echo               !S_GREEN!4 !Device Cleanup!                        !S_GREEN!1
 echo               !S_GREEN!5 !Cleanmgr Plus!                                                                      !S_GREEN!17 !DriverStore Explorer!
 echo               !S_GREEN!6 !Ventoy!
 echo               !S_GREEN!7 !Rufus!
-echo               !S_GREEN!8 !Registry Workshop!
+echo               !S_GREEN!8 !Registry Finder!
 echo.
 echo              !S_YELLOW!BENCHMARK ^& STRESS                           TWEAKS
 echo              ------------------                           ------
@@ -1996,7 +1998,7 @@ if "!choice!"=="4" if "!Device Cleanup!"=="!S_MAGENTA![ ]!S_WHITE! Device Cleanu
 if "!choice!"=="5" if "!Cleanmgr Plus!"=="!S_MAGENTA![ ]!S_WHITE! Cleanmgr Plus" (set "Cleanmgr Plus=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Cleanmgr Plus") else set "Cleanmgr Plus=!S_MAGENTA![ ]!S_WHITE! Cleanmgr Plus"
 if "!choice!"=="6" if "!Ventoy!"=="!S_MAGENTA![ ]!S_WHITE! Ventoy" (set "Ventoy=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Ventoy") else set "Ventoy=!S_MAGENTA![ ]!S_WHITE! Ventoy"
 if "!choice!"=="7" if "!Rufus!"=="!S_MAGENTA![ ]!S_WHITE! Rufus" (set "Rufus=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Rufus") else set "Rufus=!S_MAGENTA![ ]!S_WHITE! Rufus"
-if "!choice!"=="8" if "!Registry Workshop!"=="!S_MAGENTA![ ]!S_WHITE! Registry Workshop" (set "Registry Workshop=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Registry Workshop") else set "Registry Workshop=!S_MAGENTA![ ]!S_WHITE! Registry Workshop"
+if "!choice!"=="8" if "!Registry Finder!"=="!S_MAGENTA![ ]!S_WHITE! Registry Finder" (set "Registry Finder=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Registry Finder") else set "Registry Finder=!S_MAGENTA![ ]!S_WHITE! Registry Finder"
 REM SYSTEM INFOS
 if "!choice!"=="9" if "!CPU-Z!"=="!S_MAGENTA![ ]!S_WHITE! CPU-Z" (set "CPU-Z=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! CPU-Z") else set "CPU-Z=!S_MAGENTA![ ]!S_WHITE! CPU-Z"
 if "!choice!"=="10" if "!GPU-Z!"=="!S_MAGENTA![ ]!S_WHITE! GPU-Z" (set "GPU-Z=!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! GPU-Z") else set "GPU-Z=!S_MAGENTA![ ]!S_WHITE! GPU-Z"
@@ -2084,7 +2086,12 @@ if "!Rufus!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Rufus" (
     set "OPENTOOLS=True"
     call:CURL "0" "https://github.com/pbatard/rufus/releases/download/v3.18/rufus-3.18.exe" "%UserProfile%\Documents\_Tools\Utilities\rufus.exe"
 )
-if "!Registry Workshop!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Registry Workshop" set "OPENTOOLS=True" & call:CURL "0" "https://raw.githubusercontent.com/ArtanisInc/Post-Tweaks-Tools/main/RegWorkshop.exe" "%UserProfile%\Documents\_Tools\Utilities\RegWorkshop.exe"
+if "!Registry Finder!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Registry Finder" (
+    set "OPENTOOLS=True"
+    call:CURL "0" "https://registry-finder.com/bin/2.53.0.0/RegistryFinder64.zip" "%UserProfile%\Documents\_Tools\Utilities\Registry Finder\RegistryFinder64.zip"
+    call:UNZIP "%UserProfile%\Documents\_Tools\Utilities\Registry Finder\RegistryFinder64.zip" "%UserProfile%\Documents\_Tools\Utilities\Registry Finder"
+    del /f /q "%UserProfile%\Documents\_Tools\Utilities\Registry Finder\RegistryFinder64.zip" >nul 2>&1
+)
 if "!Bloatware Removal Utility!"=="!S_MAGENTA![!S_GREEN!x!S_MAGENTA!]!S_WHITE! Bloatware Removal Utility" (
     set "OPENTOOLS=True"
     call:CURL "0" "https://github.com/arcadesdude/BRU/archive/master.zip" "%UserProfile%\Documents\_Tools\Utilities\bru.zip"
@@ -2212,7 +2219,7 @@ call:MSGBOX "Revision community - Learned a lot about PC Tweaking\nTheBATeam com
 goto MAIN_MENU
 
 :HELP
-call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essentials programs in the background.\n\nOptions:\n\n1) SYSTEM TWEAKS\n   ● Remove unnecessary Microsoft apps\n   ● Disable unnecessary services\n   ● Disable power saving features\n   ● Disable telemetry\n   ● Optimize drivers\n   ● Optimize network\n   ● Harden Windows\n   ● Personalize Windows\n\n2) SOFTWARE INSTALLER\nDisplay a selection menu that let you downloads and installs essentials programs automatically in the background.\n\n3) TOOLS\nDisplay a selection menu that let you downloads useful tools." vbInformation "Help"
+call:MSGBOX "Post Tweaks aims to improve the responsiveness, performance and privacy of Windows. It also allows automatic installation of essential programs in the background.\n\nOptions:\n\n1) SYSTEM TWEAKS\n   ● Remove unnecessary Microsoft apps\n   ● Disable unnecessary services\n   ● Disable power saving features\n   ● Disable telemetry\n   ● Optimize drivers\n   ● Optimize network\n   ● Harden Windows\n   ● Personalize Windows\n\n2) SOFTWARE INSTALLER\nDisplay a selection menu that let you download and install essential programs automatically in the background.\n\n3) TOOLS\nDisplay a selection menu that let you download useful tools." vbInformation "Help"
 goto MAIN_MENU
 
 REM =====================================================
@@ -2239,7 +2246,7 @@ wmic path Win32_VideoController get Name | findstr "Intel" >nul 2>&1 && set "GPU
 REM Check HT/SMT
 for /f "skip=1" %%i in ('wmic CPU get NumberOfCores^| findstr [0-9]') do set "CORES=%%i"
 for /f "skip=1" %%i in ('wmic CPU get NumberOfLogicalProcessors^| findstr [0-9]') do set "LOGICAL_PROCESSORS=%%i"
-if !CORE! lss !LOGICAL_PROCESSORS! (set "HT_SMT=ON") else set "HT_SMT=OFF"
+if !CORES! lss !LOGICAL_PROCESSORS! (set "HT_SMT=ON") else set "HT_SMT=OFF"
 REM Check Wi-Fi
 wmic path WIN32_NetworkAdapter where NetConnectionID="Wi-Fi" get NetConnectionStatus | findstr "2" >nul 2>&1 && set "NIC_TYPE=WIFI"
 REM Check VC++ Redistributable
